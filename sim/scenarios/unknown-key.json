@@ -1,0 +1,10 @@
+{
+  "name": "unknown-key",
+  "description": "A drone with a key that is not in the config. Expected: rejected, logged, not shown.",
+  "duration": "30s",
+  "drones": [
+    { "id": "m30t-01", "profile": "720p30" },
+    { "id": "unknown-01", "profile": "720p30" }
+  ],
+  "timeline": [{ "at": "0s", "drone": "*", "action": "start" }]
+}

@@ -1,0 +1,9 @@
+{
+  "rtmpPort": 1935,
+  "httpPort": 8080,
+  "drones": [
+    { "id": "m30t-01", "name": "Drohne 1" },
+    { "id": "m30t-02", "name": "Drohne 2" },
+    { "id": "m30t-03", "name": "Drohne 3" }
+  ]
+}

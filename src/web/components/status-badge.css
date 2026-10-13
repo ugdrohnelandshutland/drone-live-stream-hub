@@ -1,0 +1,92 @@
+.status {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.45em;
+  font-weight: 800;
+  white-space: nowrap;
+  color: var(--tone-text, var(--text));
+}
+
+.status[data-tone="live"] {
+  --tone: var(--live);
+  --tone-text: var(--live-text);
+}
+.status[data-tone="nosignal"] {
+  --tone: var(--nosignal);
+  --tone-text: var(--nosignal-text);
+}
+.status[data-tone="fault"] {
+  --tone: var(--fault);
+  --tone-text: var(--fault-text);
+}
+.status[data-tone="pending"],
+.status[data-tone="idle"] {
+  --tone: var(--quiet);
+  --tone-text: var(--quiet);
+}
+
+/* One shape per tone: dot = live, triangle = no signal, cross = fault, ring = pending, dash = offline. */
+.status-mark {
+  width: 0.8em;
+  height: 0.8em;
+  flex: none;
+  background: var(--tone);
+}
+
+.status[data-tone="live"] .status-mark {
+  border-radius: 50%;
+}
+
+.status[data-tone="nosignal"] .status-mark {
+  width: 0.95em;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.status[data-tone="fault"] .status-mark {
+  clip-path: polygon(
+    20% 0,
+    50% 30%,
+    80% 0,
+    100% 20%,
+    70% 50%,
+    100% 80%,
+    80% 100%,
+    50% 70%,
+    20% 100%,
+    0 80%,
+    30% 50%,
+    0 20%
+  );
+}
+
+.status[data-tone="pending"] .status-mark {
+  background: none;
+  border: 0.16em solid var(--tone);
+  border-radius: 50%;
+  animation: status-pulse 1.2s ease-in-out infinite;
+}
+
+.status[data-tone="idle"] .status-mark {
+  height: 0.2em;
+}
+
+.status[data-compact] .status-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+@keyframes status-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status[data-tone="pending"] .status-mark {
+    animation: none;
+  }
+}

@@ -1,0 +1,447 @@
+{
+  "name": "field-day",
+  "description": "35 minutes with 3 drones and a mix of everything: camera switches, crashes, stops, bad Wi-Fi, out-of-range cuts, a duplicate key. Expected: service stays healthy, memory stays flat, every drone recovers. Generated with a fixed seed.",
+  "duration": "36m",
+  "drones": [
+    {
+      "id": "m30t-01",
+      "profile": "1080p30"
+    },
+    {
+      "id": "m30t-02",
+      "profile": "1080p30"
+    },
+    {
+      "id": "m30t-03",
+      "profile": "720p30",
+      "switchMode": "restart"
+    }
+  ],
+  "timeline": [
+    {
+      "at": "0s",
+      "drone": "m30t-01",
+      "action": "start"
+    },
+    {
+      "at": "20s",
+      "drone": "m30t-02",
+      "action": "start"
+    },
+    {
+      "at": "40s",
+      "drone": "m30t-03",
+      "action": "start"
+    },
+    {
+      "at": "90s",
+      "drone": "m30t-03",
+      "action": "switchCamera",
+      "camera": "wide"
+    },
+    {
+      "at": "118s",
+      "drone": "m30t-01",
+      "action": "switchCamera",
+      "camera": "wide"
+    },
+    {
+      "at": "141s",
+      "drone": "m30t-03",
+      "action": "stall",
+      "for": "14s"
+    },
+    {
+      "at": "163s",
+      "drone": "m30t-03",
+      "action": "drop",
+      "for": "5s"
+    },
+    {
+      "at": "185s",
+      "drone": "m30t-01",
+      "action": "switchCamera",
+      "camera": "wide"
+    },
+    {
+      "at": "205s",
+      "drone": "m30t-03",
+      "action": "switchCamera",
+      "camera": "wide"
+    },
+    {
+      "at": "247s",
+      "drone": "m30t-03",
+      "action": "drop",
+      "for": "15s"
+    },
+    {
+      "at": "285s",
+      "drone": "m30t-02",
+      "action": "cut",
+      "for": "3s"
+    },
+    {
+      "at": "329s",
+      "drone": "m30t-01",
+      "action": "stall",
+      "for": "5s"
+    },
+    {
+      "at": "357s",
+      "drone": "m30t-01",
+      "action": "switchCamera",
+      "camera": "thermal"
+    },
+    {
+      "at": "380s",
+      "drone": "m30t-01",
+      "action": "switchCamera",
+      "camera": "thermal"
+    },
+    {
+      "at": "427s",
+      "drone": "m30t-02",
+      "action": "network",
+      "latencyMs": 20,
+      "jitterMs": 150,
+      "bandwidthKbps": 4000
+    },
+    {
+      "at": "464s",
+      "drone": "m30t-01",
+      "action": "stop"
+    },
+    {
+      "at": "467s",
+      "drone": "m30t-02",
+      "action": "heal"
+    },
+    {
+      "at": "496s",
+      "drone": "m30t-01",
+      "action": "network",
+      "latencyMs": 120,
+      "jitterMs": 150,
+      "bandwidthKbps": 4000
+    },
+    {
+      "at": "524s",
+      "drone": "m30t-01",
+      "action": "start"
+    },
+    {
+      "at": "534s",
+      "drone": "m30t-01",
+      "action": "stall",
+      "for": "2s"
+    },
+    {
+      "at": "536s",
+      "drone": "m30t-01",
+      "action": "heal"
+    },
+    {
+      "at": "575s",
+      "drone": "m30t-01",
+      "action": "stall",
+      "for": "2s"
+    },
+    {
+      "at": "622s",
+      "drone": "m30t-01",
+      "action": "cut",
+      "for": "20s"
+    },
+    {
+      "at": "650s",
+      "drone": "m30t-02",
+      "action": "network",
+      "latencyMs": 60,
+      "jitterMs": 0,
+      "bandwidthKbps": 4000
+    },
+    {
+      "at": "681s",
+      "drone": "m30t-01",
+      "action": "stall",
+      "for": "14s"
+    },
+    {
+      "at": "690s",
+      "drone": "m30t-02",
+      "action": "heal"
+    },
+    {
+      "at": "730s",
+      "drone": "m30t-03",
+      "action": "network",
+      "latencyMs": 120,
+      "jitterMs": 150,
+      "bandwidthKbps": 0
+    },
+    {
+      "at": "767s",
+      "drone": "m30t-03",
+      "action": "switchCamera",
+      "camera": "thermal"
+    },
+    {
+      "at": "770s",
+      "drone": "m30t-03",
+      "action": "heal"
+    },
+    {
+      "at": "799s",
+      "drone": "m30t-02",
+      "action": "stop"
+    },
+    {
+      "at": "839s",
+      "drone": "m30t-03",
+      "action": "network",
+      "latencyMs": 120,
+      "jitterMs": 50,
+      "bandwidthKbps": 0
+    },
+    {
+      "at": "859s",
+      "drone": "m30t-02",
+      "action": "start"
+    },
+    {
+      "at": "866s",
+      "drone": "m30t-01",
+      "action": "cut",
+      "for": "20s"
+    },
+    {
+      "at": "879s",
+      "drone": "m30t-03",
+      "action": "heal"
+    },
+    {
+      "at": "894s",
+      "drone": "m30t-01",
+      "action": "switchCamera",
+      "camera": "wide"
+    },
+    {
+      "at": "942s",
+      "drone": "m30t-03",
+      "action": "switchCamera",
+      "camera": "wide"
+    },
+    {
+      "at": "977s",
+      "drone": "m30t-02",
+      "action": "duplicate",
+      "for": "10s"
+    },
+    {
+      "at": "1017s",
+      "drone": "m30t-02",
+      "action": "switchCamera",
+      "camera": "zoom"
+    },
+    {
+      "at": "1044s",
+      "drone": "m30t-03",
+      "action": "network",
+      "latencyMs": 60,
+      "jitterMs": 150,
+      "bandwidthKbps": 8000
+    },
+    {
+      "at": "1077s",
+      "drone": "m30t-03",
+      "action": "switchCamera",
+      "camera": "zoom"
+    },
+    {
+      "at": "1084s",
+      "drone": "m30t-03",
+      "action": "heal"
+    },
+    {
+      "at": "1101s",
+      "drone": "m30t-03",
+      "action": "drop",
+      "for": "5s"
+    },
+    {
+      "at": "1148s",
+      "drone": "m30t-01",
+      "action": "switchCamera",
+      "camera": "zoom"
+    },
+    {
+      "at": "1193s",
+      "drone": "m30t-03",
+      "action": "drop",
+      "for": "5s"
+    },
+    {
+      "at": "1225s",
+      "drone": "m30t-02",
+      "action": "network",
+      "latencyMs": 60,
+      "jitterMs": 150,
+      "bandwidthKbps": 4000
+    },
+    {
+      "at": "1262s",
+      "drone": "m30t-01",
+      "action": "stall",
+      "for": "2s"
+    },
+    {
+      "at": "1265s",
+      "drone": "m30t-02",
+      "action": "heal"
+    },
+    {
+      "at": "1303s",
+      "drone": "m30t-03",
+      "action": "stall",
+      "for": "14s"
+    },
+    {
+      "at": "1333s",
+      "drone": "m30t-01",
+      "action": "switchCamera",
+      "camera": "zoom"
+    },
+    {
+      "at": "1367s",
+      "drone": "m30t-01",
+      "action": "stop"
+    },
+    {
+      "at": "1415s",
+      "drone": "m30t-03",
+      "action": "switchCamera",
+      "camera": "wide"
+    },
+    {
+      "at": "1427s",
+      "drone": "m30t-01",
+      "action": "start"
+    },
+    {
+      "at": "1459s",
+      "drone": "m30t-01",
+      "action": "drop",
+      "for": "5s"
+    },
+    {
+      "at": "1506s",
+      "drone": "m30t-03",
+      "action": "switchCamera",
+      "camera": "wide"
+    },
+    {
+      "at": "1542s",
+      "drone": "m30t-03",
+      "action": "switchCamera",
+      "camera": "thermal"
+    },
+    {
+      "at": "1586s",
+      "drone": "m30t-01",
+      "action": "network",
+      "latencyMs": 120,
+      "jitterMs": 0,
+      "bandwidthKbps": 8000
+    },
+    {
+      "at": "1616s",
+      "drone": "m30t-02",
+      "action": "switchCamera",
+      "camera": "thermal"
+    },
+    {
+      "at": "1626s",
+      "drone": "m30t-01",
+      "action": "heal"
+    },
+    {
+      "at": "1664s",
+      "drone": "m30t-02",
+      "action": "switchCamera",
+      "camera": "zoom"
+    },
+    {
+      "at": "1712s",
+      "drone": "m30t-03",
+      "action": "stop"
+    },
+    {
+      "at": "1734s",
+      "drone": "m30t-03",
+      "action": "drop",
+      "for": "5s"
+    },
+    {
+      "at": "1772s",
+      "drone": "m30t-03",
+      "action": "start"
+    },
+    {
+      "at": "1778s",
+      "drone": "m30t-03",
+      "action": "stall",
+      "for": "2s"
+    },
+    {
+      "at": "1819s",
+      "drone": "m30t-02",
+      "action": "stop"
+    },
+    {
+      "at": "1844s",
+      "drone": "m30t-02",
+      "action": "drop",
+      "for": "45s"
+    },
+    {
+      "at": "1877s",
+      "drone": "m30t-01",
+      "action": "duplicate",
+      "for": "10s"
+    },
+    {
+      "at": "1879s",
+      "drone": "m30t-02",
+      "action": "start"
+    },
+    {
+      "at": "1921s",
+      "drone": "m30t-03",
+      "action": "stall",
+      "for": "14s"
+    },
+    {
+      "at": "1950s",
+      "drone": "m30t-02",
+      "action": "stop"
+    },
+    {
+      "at": "1990s",
+      "drone": "m30t-02",
+      "action": "drop",
+      "for": "45s"
+    },
+    {
+      "at": "2010s",
+      "drone": "m30t-02",
+      "action": "start"
+    },
+    {
+      "at": "2024s",
+      "drone": "m30t-01",
+      "action": "switchCamera",
+      "camera": "zoom"
+    }
+  ]
+}

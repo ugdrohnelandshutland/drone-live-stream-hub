@@ -1,0 +1,76 @@
+/* As tall as the other buttons (--touch); width and thumb follow from the height. */
+.theme-switch {
+  --switch-height: var(--touch);
+  --thumb: calc(var(--switch-height) - 12px);
+  flex: none;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+.theme-switch-track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: calc(var(--thumb) * 2 + 12px);
+  height: var(--switch-height);
+  padding: 0 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--strip);
+  color: var(--quiet);
+}
+
+.theme-switch-track > .icon {
+  width: 20px;
+  height: 20px;
+  opacity: 0.7;
+}
+
+.theme-switch-thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  display: grid;
+  place-items: center;
+  width: var(--thumb);
+  height: var(--thumb);
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: var(--accent-fill);
+  color: var(--on-accent);
+  transition: transform 150ms ease-out;
+}
+
+.theme-switch[aria-checked="true"] .theme-switch-thumb {
+  transform: translateX(var(--thumb));
+}
+
+.theme-switch-thumb .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.theme-switch:active:not(:disabled) {
+  background: transparent;
+}
+
+.theme-switch:active .theme-switch-track {
+  background: var(--raised);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .theme-switch:hover:not(:disabled) {
+    background: transparent;
+  }
+
+  .theme-switch:hover .theme-switch-track {
+    border-color: var(--accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-switch-thumb {
+    transition: none;
+  }
+}

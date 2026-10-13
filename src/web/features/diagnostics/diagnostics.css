@@ -1,0 +1,146 @@
+/* Diagnostics: a dense developer page; readability over looks. */
+
+.diag-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+}
+
+.diag-header h1 {
+  font-size: var(--text-xl);
+  font-weight: 800;
+}
+
+.diag-meta {
+  flex: 1;
+}
+
+.diag-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.diag-actions button[aria-pressed="true"] {
+  border-color: var(--accent-fill);
+  background: var(--accent-fill);
+  color: var(--on-accent);
+}
+
+.diag-rejected,
+.diag-card {
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--slot-idle);
+  border-radius: var(--radius-md);
+  background: var(--strip);
+}
+
+.diag-rejected {
+  border-left-color: var(--nosignal);
+}
+
+.diag-card[data-state="live"] {
+  border-left-color: var(--live);
+}
+
+.diag-rejected h2,
+.diag-card h2 {
+  font-size: var(--text-lg);
+}
+
+.diag-rejected p {
+  margin: var(--space-1) 0 var(--space-3);
+}
+
+.diag-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.findings {
+  margin: var(--space-3) 0 0;
+  padding-left: var(--space-5);
+}
+
+.findings li {
+  margin: var(--space-1) 0;
+}
+
+.findings .warn {
+  color: var(--nosignal-text);
+  font-weight: 700;
+}
+
+.findings .info {
+  color: var(--quiet);
+}
+
+.ok {
+  margin: var(--space-3) 0 0;
+  color: var(--live-text);
+  font-weight: 700;
+}
+
+.diag-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: var(--space-2) var(--space-6);
+}
+
+.diag-grid h3 {
+  margin: var(--space-5) 0 var(--space-2);
+  color: var(--quiet);
+  font-size: var(--text-sm);
+}
+
+.diag-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.diag-table th,
+.diag-table td {
+  padding: var(--space-1) var(--space-2) var(--space-1) 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.diag-table th {
+  width: 40%;
+  color: var(--quiet);
+  font-weight: 400;
+}
+
+.diag-table thead th {
+  font-weight: 700;
+}
+
+.diag-table .expected {
+  color: var(--quiet);
+}
+
+.events {
+  margin: 0;
+  padding: 0;
+  font-size: var(--text-sm);
+  list-style: none;
+}
+
+.events li {
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.events time {
+  margin-right: var(--space-2);
+  color: var(--quiet);
+  font-variant-numeric: tabular-nums;
+}

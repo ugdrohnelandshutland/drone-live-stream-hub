@@ -1,0 +1,15 @@
+# Optional: attach the service to the Docker network of Nginx Proxy Manager, so NPM can
+# forward to it by name (dlsh-hub:8080) and no host port is needed.
+#   docker compose -f compose.yaml -f compose.proxy.yaml up -d --build
+# DLSH_PROXY_NETWORK: name of NPM's network (docker network ls), default npm_default.
+services:
+  hub:
+    networks:
+      default: {}
+      proxy:
+        aliases: [dlsh-hub]
+
+networks:
+  proxy:
+    external: true
+    name: ${DLSH_PROXY_NETWORK:-npm_default}

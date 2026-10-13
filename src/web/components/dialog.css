@@ -1,0 +1,49 @@
+.dialog {
+  width: min(44rem, calc(100vw - 2 * var(--space-4)));
+  max-height: calc(100dvh - 2 * var(--space-5));
+  padding: 0; /* the body fills the box, so a click on .dialog itself is the backdrop */
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--strip);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  /* Inherited from where it is mounted (e.g. the small footer text) otherwise. */
+  font-size: var(--text-md);
+  text-align: left;
+}
+
+.dialog::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+
+/* Only the content scrolls; header and close button stay in view. */
+.dialog[open] {
+  display: flex;
+}
+
+.dialog-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.dialog-header h2 {
+  font-size: var(--text-lg);
+}
+
+.dialog-content {
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-4);
+  overscroll-behavior: contain;
+}

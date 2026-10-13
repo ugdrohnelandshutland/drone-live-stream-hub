@@ -1,0 +1,18 @@
+{
+  "name": "staggered-start",
+  "description": "Drones join one by one, some leave and come back. Expected: overview updates live without reload.",
+  "drones": [
+    { "id": "m30t-01", "profile": "720p30" },
+    { "id": "m30t-02", "profile": "720p30" },
+    { "id": "m30t-03", "profile": "720p30" }
+  ],
+  "timeline": [
+    { "at": "0s", "drone": "m30t-01", "action": "start" },
+    { "at": "10s", "drone": "m30t-02", "action": "start" },
+    { "at": "20s", "drone": "m30t-03", "action": "start" },
+    { "at": "40s", "drone": "m30t-02", "action": "stop" },
+    { "at": "55s", "drone": "m30t-01", "action": "stop" },
+    { "at": "70s", "drone": "m30t-02", "action": "start" },
+    { "at": "85s", "drone": "m30t-01", "action": "start" }
+  ]
+}

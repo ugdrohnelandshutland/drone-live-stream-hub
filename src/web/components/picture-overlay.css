@@ -1,0 +1,54 @@
+.picture-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: var(--bezel);
+  color: var(--on-bezel);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms;
+}
+
+.picture-overlay[data-visible] {
+  opacity: 1;
+}
+
+/* Hatch: no picture. Amber when one is expected, grey when the drone is simply not up. */
+.picture-overlay[data-tone="nosignal"],
+.picture-overlay[data-tone="idle"] {
+  --hatch: var(--hatch-idle);
+  background: repeating-linear-gradient(-45deg, var(--hatch) 0 2px, transparent 2px 18px), var(--bezel);
+}
+.picture-overlay[data-tone="nosignal"] {
+  --hatch: var(--hatch-nosignal);
+}
+
+.picture-overlay-text {
+  display: grid;
+  gap: 0.4em;
+  padding: 0.5em 0.9em;
+  border-radius: var(--radius-sm);
+  background: var(--bezel);
+}
+
+.picture-overlay-title {
+  font-size: var(--overlay-title, var(--text-lg));
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.picture-overlay-detail {
+  justify-self: center;
+  max-width: 34ch;
+  color: var(--on-bezel-quiet);
+  font-size: var(--overlay-detail, var(--text-sm));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .picture-overlay {
+    transition: none;
+  }
+}

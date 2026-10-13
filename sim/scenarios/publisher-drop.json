@@ -1,0 +1,14 @@
+{
+  "name": "publisher-drop",
+  "description": "Publishers crash and come back after 5–60 s. Expected: 'Kein Signal', then automatic recovery.",
+  "drones": [
+    { "id": "m30t-01", "profile": "1080p30" },
+    { "id": "m30t-02", "profile": "720p30" }
+  ],
+  "timeline": [
+    { "at": "0s", "drone": "*", "action": "start" },
+    { "at": "15s", "drone": "m30t-01", "action": "drop", "for": "5s" },
+    { "at": "25s", "drone": "m30t-02", "action": "drop", "for": "30s" },
+    { "at": "45s", "drone": "m30t-01", "action": "drop", "for": "60s" }
+  ]
+}

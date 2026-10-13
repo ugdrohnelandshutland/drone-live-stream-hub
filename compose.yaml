@@ -1,0 +1,50 @@
+# Demo / test hosting: the service plus three simulated drones. See docs/docker.md.
+#   DLSH_COMMIT=$(git rev-parse --short HEAD) docker compose up -d --build
+#   → http://<docker host>:18080
+services:
+  hub:
+    build:
+      context: .
+      target: hub
+      args:
+        DLSH_COMMIT: ${DLSH_COMMIT:-}
+    # Built from this repository, never pulled (Portainer runs `compose pull` first).
+    pull_policy: build
+    ports:
+      # Web UI + video. The container port stays 8080; change only the host side.
+      - "${DLSH_HTTP_PORT:-18080}:8080"
+      # Uncomment so a real RC Plus can push (host port freely choosable):
+      # - "${DLSH_RTMP_PORT:-1935}:1935"
+    # Own drone list instead of the example (m30t-01..03):
+    # volumes:
+    #   - ./config/drones.json:/app/config/drones.json:ro
+    restart: unless-stopped
+
+  sim:
+    build:
+      context: .
+      target: sim
+      args:
+        DLSH_COMMIT: ${DLSH_COMMIT:-}
+    pull_policy: build
+    environment:
+      # Clock in the video overlay.
+      TZ: ${TZ:-Europe/Berlin}
+    # 720p at 1.5 Mbit/s keeps the upload per viewer low (overview: all previews at once).
+    command:
+      - npx
+      - tsx
+      - src/sim/cli.ts
+      - --host
+      - hub
+      - --drones
+      - "${DLSH_SIM_DRONES:-3}"
+      - --profile
+      - 720p30
+      - --bitrate
+      - "1500"
+      - --switch-every
+      - "30"
+    depends_on:
+      - hub
+    restart: unless-stopped

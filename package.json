@@ -1,0 +1,58 @@
+{
+  "name": "drone-live-stream-hub",
+  "version": "0.7.0",
+  "private": true,
+  "description": "Self-hosted hub that receives RTMP from DJI drones and plays them in the browser via FLV over WebSocket.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": "^24.21.0"
+  },
+  "scripts": {
+    "dev": "tsx scripts/dev.ts",
+    "dev:service": "tsx watch src/server/index.ts",
+    "build": "npm run typecheck && tsc -p tsconfig.build.json && vite build",
+    "typecheck": "tsc -p tsconfig.json && tsc -p src/web/tsconfig.json",
+    "start": "node dist/server/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "sim": "tsx src/sim/cli.ts",
+    "measure:latency": "tsx scripts/measure-latency.ts",
+    "test:scenarios": "vitest run --config vitest.scenarios.config.ts",
+    "sim:proxy": "tsx src/sim/proxy-cli.ts",
+    "package:windows": "npm run build && tsx scripts/package-windows.ts",
+    "bundle": "tsx scripts/bundle-server.ts"
+  },
+  "dependencies": {
+    "mpegts.js": "1.8.2",
+    "node-media-server": "4.4.3",
+    "pino": "10.4.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "ws": "8.22.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/ws": "^8.18.2",
+    "@vitejs/plugin-react": "^6.1.1",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "jsdom": "^30.1.1",
+    "prettier": "^3.9.9",
+    "rolldown": "1.2.13",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.1",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.3"
+  }
+}

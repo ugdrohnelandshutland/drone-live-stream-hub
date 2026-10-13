@@ -1,0 +1,138 @@
+/*
+ * Design tokens, navy and teal look (ADR 0010): navy surfaces, thin blue-grey
+ * lines, a teal accent for everything you can operate, rounded cards. Two schemes for the
+ * field: "Nacht" is the navy palette (ELW, night operations); "Tag" is its light
+ * counterpart for tablets in sunlight (maximum contrast, nothing pale). Signal colours stay
+ * reserved for status; the picture surround (bezel) is black in both.
+ */
+
+:root {
+  /* Day */
+  --ground: #e8eef3;
+  --strip: #ffffff;
+  --raised: #dbe5ec;
+  --text: #0b1a28;
+  --quiet: #3b5063;
+  --line: #b9c8d4;
+  --line-strong: #6f8597;
+  --slot-idle: #c9d5df;
+  --focus: #0f6f68;
+
+  --accent: #0f6f68;
+  --accent-fill: #1d6f68;
+  --accent-fill-hover: #17847b;
+  --on-accent: #ffffff;
+  --shadow: 0 16px 40px rgb(11 26 40 / 0.14);
+
+  --live: #0b7a3e;
+  --live-text: #0b7a3e;
+  --nosignal: #f2b01e;
+  --nosignal-text: #8a5a00;
+  --fault: #c4202b;
+  --fault-text: #c4202b;
+  /* Text on a status-coloured block. */
+  --on-tone: #ffffff;
+  --on-tone-nosignal: #08131c;
+
+  --bezel: #000000;
+  --on-bezel: #f2f5f7;
+  --on-bezel-quiet: #a9b6c1;
+  --hatch-idle: rgb(255 255 255 / 0.1);
+  --hatch-nosignal: rgb(255 197 61 / 0.4);
+
+  /* Corners: buttons, cards and tiles, dialogs. */
+  --radius-sm: 7px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 40px;
+
+  /* Type scale (1.25) */
+  --text-xs: 13px;
+  --text-sm: 15px;
+  --text-md: 17px;
+  --text-lg: 21px;
+  --text-xl: 26px;
+  --text-2xl: 33px;
+
+  /* Touch: gloves and tablets */
+  --touch: 48px;
+  --strip-height: 56px;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="day"]) {
+    --ground: #09111c;
+    --strip: #102031;
+    --raised: #172b3f;
+    --text: #e3edf7;
+    --quiet: #a4bacb;
+    --line: #294057;
+    --line-strong: #476079;
+    --slot-idle: #24394e;
+    --focus: #58d5cc;
+
+    --accent: #58d5cc;
+    --accent-fill: #258078;
+    --accent-fill-hover: #2d948b;
+    --on-accent: #ffffff;
+    --shadow: 0 28px 75px rgb(0 0 0 / 0.33);
+
+    --live: #2fc873;
+    --live-text: #4bdb8b;
+    --nosignal: #ffc53d;
+    --nosignal-text: #ffc53d;
+    --fault: #f0444e;
+    --fault-text: #ff6b73;
+    --on-tone: #04121a;
+    --on-tone-nosignal: #04121a;
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="night"] {
+  --ground: #09111c;
+  --strip: #102031;
+  --raised: #172b3f;
+  --text: #e3edf7;
+  --quiet: #a4bacb;
+  --line: #294057;
+  --line-strong: #476079;
+  --slot-idle: #24394e;
+  --focus: #58d5cc;
+
+  --accent: #58d5cc;
+  --accent-fill: #258078;
+  --accent-fill-hover: #2d948b;
+  --on-accent: #ffffff;
+  --shadow: 0 28px 75px rgb(0 0 0 / 0.33);
+
+  --live: #2fc873;
+  --live-text: #4bdb8b;
+  --nosignal: #ffc53d;
+  --nosignal-text: #ffc53d;
+  --fault: #f0444e;
+  --fault-text: #ff6b73;
+  --on-tone: #04121a;
+  --on-tone-nosignal: #04121a;
+
+  color-scheme: dark;
+}
+
+/* Kiosk touchscreen: read from a few metres away, touched standing. */
+:root[data-kiosk] {
+  --touch: 56px;
+  --strip-height: 72px;
+  --text-md: 21px;
+  --text-lg: 26px;
+  --text-xl: 33px;
+}

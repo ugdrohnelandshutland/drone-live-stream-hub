@@ -1,0 +1,11 @@
+{
+  "name": "steady",
+  "description": "Three drones stream continuously. Expected: all live, stable playback.",
+  "duration": "5m",
+  "drones": [
+    { "id": "m30t-01", "profile": "1080p30" },
+    { "id": "m30t-02", "profile": "1080p30" },
+    { "id": "m30t-03", "profile": "720p30" }
+  ],
+  "timeline": [{ "at": "0s", "drone": "*", "action": "start" }]
+}

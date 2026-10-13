@@ -1,0 +1,8 @@
+node_modules/
+dist/
+config/drones.json
+sim/reports/
+*.log
+*:Zone.Identifier
+release/
+.cache/

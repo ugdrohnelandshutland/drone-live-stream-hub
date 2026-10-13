@@ -1,0 +1,26 @@
+{
+  "name": "bad-wifi",
+  "description": "Through the chaos proxy: latency, jitter, bandwidth cap below the bitrate, short and long stalls, hard cut while out of range. Expected: no crash, no memory growth, recovery after the network heals.",
+  "drones": [
+    { "id": "m30t-01", "profile": "1080p30" },
+    { "id": "m30t-02", "profile": "720p30" }
+  ],
+  "timeline": [
+    { "at": "0s", "drone": "*", "action": "start" },
+    { "at": "10s", "drone": "*", "action": "network", "latencyMs": 80, "jitterMs": 120 },
+    { "at": "25s", "drone": "m30t-01", "action": "network", "bandwidthKbps": 3000 },
+    { "at": "40s", "drone": "*", "action": "heal" },
+    { "at": "45s", "drone": "*", "action": "stall", "for": "3s" },
+    { "at": "55s", "drone": "m30t-01", "action": "stall", "for": "15s" },
+    { "at": "80s", "drone": "m30t-02", "action": "cut", "for": "10s" },
+    {
+      "at": "100s",
+      "drone": "*",
+      "action": "network",
+      "latencyMs": 30,
+      "jitterMs": 40,
+      "bandwidthKbps": 20000
+    },
+    { "at": "115s", "drone": "*", "action": "heal" }
+  ]
+}

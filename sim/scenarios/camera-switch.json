@@ -1,0 +1,17 @@
+{
+  "name": "camera-switch",
+  "description": "Each drone cycles wide → zoom → thermal → wide every 10 s. m30t-01 switches inside its RTMP session (like Pilot 2 is expected to), m30t-02 reconnects for each switch. Expected: viewers get 4001 stream-reset (m30t-01) or 4000 drone-offline (m30t-02) and playback resumes with the new resolution.",
+  "drones": [
+    { "id": "m30t-01", "profile": "1080p30", "switchMode": "inline" },
+    { "id": "m30t-02", "profile": "720p30", "switchMode": "restart" }
+  ],
+  "timeline": [
+    { "at": "0s", "drone": "*", "action": "start", "camera": "wide" },
+    { "at": "10s", "drone": "*", "action": "switchCamera", "camera": "zoom" },
+    { "at": "20s", "drone": "*", "action": "switchCamera", "camera": "thermal" },
+    { "at": "30s", "drone": "*", "action": "switchCamera", "camera": "wide" },
+    { "at": "40s", "drone": "*", "action": "switchCamera", "camera": "zoom" },
+    { "at": "50s", "drone": "*", "action": "switchCamera", "camera": "thermal" },
+    { "at": "60s", "drone": "*", "action": "switchCamera", "camera": "wide" }
+  ]
+}

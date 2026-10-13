@@ -1,0 +1,89 @@
+import { mkdtemp, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { describe, expect, it } from "vitest";
+import { ConfigError, loadConfig, parseConfig, resolveConfigPath } from "../../src/server/config.js";
+
+const valid = {
+  rtmpPort: 1935,
+  httpPort: 8080,
+  drones: [
+    { id: "m30t-01", name: "Drohne 1" },
+    { id: "m30t-02", name: "Drohne 2" },
+  ],
+};
+
+describe("parseConfig", () => {
+  it("accepts a valid config", () => {
+    expect(parseConfig(valid)).toEqual(valid);
+  });
+
+  it("applies default ports", () => {
+    const config = parseConfig({ drones: valid.drones });
+    expect(config.rtmpPort).toBe(1935);
+    expect(config.httpPort).toBe(8080);
+  });
+
+  it.each(["M30T-01", "m30t_01", "", "a".repeat(33), "drone 1"])("rejects drone id %j", (id) => {
+    expect(() => parseConfig({ drones: [{ id, name: "x" }] })).toThrow(ConfigError);
+  });
+
+  it("rejects duplicate ids with a readable message", () => {
+    expect(() => parseConfig({ drones: [valid.drones[0], valid.drones[0]] })).toThrow(
+      /drones\.1\.id: duplicate drone id "m30t-01"/,
+    );
+  });
+
+  it("rejects unknown keys, empty drone lists and invalid ports", () => {
+    expect(() => parseConfig({ ...valid, extra: true })).toThrow(ConfigError);
+    expect(() => parseConfig({ drones: [] })).toThrow(ConfigError);
+    expect(() => parseConfig({ ...valid, rtmpPort: 70000 })).toThrow(/rtmpPort/);
+  });
+});
+
+describe("resolveConfigPath", () => {
+  const cwd = path.resolve("/srv/hub");
+
+  it("prefers --config over the environment", () => {
+    expect(resolveConfigPath(["--config", "a.json"], { DLSH_CONFIG: "b.json" }, cwd)).toBe(
+      path.join(cwd, "a.json"),
+    );
+    expect(resolveConfigPath(["--config=c.json"], {}, cwd)).toBe(path.join(cwd, "c.json"));
+  });
+
+  it("falls back to the environment, then the default", () => {
+    expect(resolveConfigPath([], { DLSH_CONFIG: "b.json" }, cwd)).toBe(path.join(cwd, "b.json"));
+    expect(resolveConfigPath([], {}, cwd)).toBe(path.join(cwd, "config", "drones.json"));
+  });
+
+  it("requires a value for --config", () => {
+    expect(() => resolveConfigPath(["--config"], {}, cwd)).toThrow(ConfigError);
+  });
+});
+
+describe("loadConfig", () => {
+  it("reports a missing file with a hint", async () => {
+    await expect(loadConfig(path.join(os.tmpdir(), "does-not-exist.json"))).rejects.toThrow(
+      /ENOENT.*example/,
+    );
+  });
+
+  it("reports invalid JSON", async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), "dlsh-config-"));
+    const file = path.join(dir, "drones.json");
+    await writeFile(file, "{ nope");
+    await expect(loadConfig(file)).rejects.toThrow(/not valid JSON/);
+  });
+
+  it("accepts a UTF-8 byte order mark (Windows Notepad)", async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), "dlsh-config-"));
+    const file = path.join(dir, "drones.json");
+    await writeFile(file, '﻿{ "drones": [{ "id": "m30t-01", "name": "Drohne 1" }] }', "utf8");
+    expect((await loadConfig(file)).drones).toHaveLength(1);
+  });
+
+  it("loads the shipped example", async () => {
+    const config = await loadConfig(path.join("config", "drones.example.json"));
+    expect(config.drones.length).toBeGreaterThan(0);
+  });
+});

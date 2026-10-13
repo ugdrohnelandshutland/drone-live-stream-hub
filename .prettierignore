@@ -1,0 +1,7 @@
+dist/
+node_modules/
+sim/reports/
+CLAUDE.md
+package-lock.json
+release/
+.cache/

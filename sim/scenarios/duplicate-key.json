@@ -1,0 +1,9 @@
+{
+  "name": "duplicate-key",
+  "description": "A second publisher uses an already live key for 20 s. Expected: the new session replaces the old one (viewers get 4001, old connection closed). The original publisher reconnects like an RC Plus and takes over again; repeated replacements are logged as an error.",
+  "drones": [{ "id": "m30t-01", "profile": "720p30" }],
+  "timeline": [
+    { "at": "0s", "drone": "m30t-01", "action": "start" },
+    { "at": "15s", "drone": "m30t-01", "action": "duplicate", "for": "20s" }
+  ]
+}
