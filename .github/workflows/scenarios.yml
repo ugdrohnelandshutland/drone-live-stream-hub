@@ -1,0 +1,23 @@
+# Scenario suite (service + simulated drones + viewers, ~5 min). On demand only ("Run
+# workflow" in the Actions tab): it is slow, and the weak-viewer test is timing dependent.
+name: scenarios
+
+on:
+  workflow_dispatch:
+
+jobs:
+  scenarios:
+    runs-on: ubuntu-latest
+    env:
+      # Fail instead of skipping the simulator tests if ffmpeg is unusable.
+      REQUIRE_FFMPEG: "1"
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: ./.github/actions/setup-ffmpeg
+      - run: npm ci --no-audit --no-fund
+      - run: npm run test:scenarios

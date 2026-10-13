@@ -1,0 +1,27 @@
+name: setup-ffmpeg
+description: >-
+  Static ffmpeg 8.1 (BtbN) for the simulator, cached between runs, plus a font for the
+  overlay.
+runs:
+  using: composite
+  steps:
+    - name: Resolve ffmpeg build
+      id: resolve
+      shell: bash
+      run: |
+        sum="$(curl -fsSL https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/checksums.sha256 \
+          | awk '$2 == "ffmpeg-n8.1-latest-linux64-gpl-8.1.tar.xz" { print $1 }')"
+        echo "key=ffmpeg-8.1-${sum}" >> "$GITHUB_OUTPUT"
+    - name: Cache ffmpeg
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ffmpeg
+        key: ${{ steps.resolve.outputs.key }}
+    - name: Install ffmpeg
+      shell: bash
+      run: ./scripts/ci/install-ffmpeg.sh
+    - name: Install a font for the simulator overlay
+      shell: bash
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq --no-install-recommends fonts-dejavu-core
