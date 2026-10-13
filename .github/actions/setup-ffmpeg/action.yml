@@ -13,7 +13,7 @@ runs:
           | awk '$2 == "ffmpeg-n8.1-latest-linux64-gpl-8.1.tar.xz" { print $1 }')"
         echo "key=ffmpeg-8.1-${sum}" >> "$GITHUB_OUTPUT"
     - name: Cache ffmpeg
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ~/.cache/ffmpeg
         key: ${{ steps.resolve.outputs.key }}
