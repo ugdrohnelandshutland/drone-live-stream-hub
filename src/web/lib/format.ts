@@ -79,9 +79,9 @@ export function snapshotCaption(name: string, droneId: string, date: Date): stri
   return `${who} · ${formatDateTime(date)}`;
 }
 
-/** "2026-10-10_14-03-07_m30t-01.png": sorts by time across drones, safe on every file system. */
+/** "2026-10-10_14-03-07_m30t-01.jpg": sorts by time across drones, safe on every file system. */
 export function snapshotFileName(droneId: string, date: Date): string {
   const day = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   const time = `${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
-  return `${day}_${time}_${droneId}.png`;
+  return `${day}_${time}_${droneId}.jpg`;
 }

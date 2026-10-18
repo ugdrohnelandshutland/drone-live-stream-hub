@@ -64,6 +64,6 @@ describe("web format helpers", () => {
     const at = new Date(2026, 9, 10, 9, 5, 7);
     expect(snapshotCaption("Drohne 1", "m30t-01", at)).toBe("Drohne 1 (m30t-01) · 10.10.2026 09:05:07 Uhr");
     expect(snapshotCaption("m30t-01", "m30t-01", at)).toBe("m30t-01 · 10.10.2026 09:05:07 Uhr");
-    expect(snapshotFileName("m30t-01", at)).toBe("2026-10-10_09-05-07_m30t-01.png");
+    expect(snapshotFileName("m30t-01", at)).toBe("2026-10-10_09-05-07_m30t-01.jpg");
   });
 });

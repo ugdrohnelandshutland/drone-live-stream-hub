@@ -4,6 +4,7 @@ const FOOTER_BG = "#0b0f14";
 const FOOTER_TEXT = "#e8edf2";
 const FOOTER_MUTED = "#8b98a5";
 const BRAND = "Drone Live Stream Hub";
+const JPEG_QUALITY = 0.92;
 
 /**
  * Draws the current frame at its native resolution and appends a footer (the picture itself
@@ -50,7 +51,13 @@ export function captureSnapshot(video: HTMLVideoElement, caption: string): Promi
     ctx.fillText(BRAND, width - padding, y);
   }
 
+  // JPEG, not PNG: a lossless PNG of a decoded H.264 frame is ~4 MB at 1080p and only preserves
+  // the stream's own compression artefacts; JPEG at 0.92 looks the same at a fraction of the size.
   return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("PNG encoding failed"))), "image/png");
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("JPEG encoding failed"))),
+      "image/jpeg",
+      JPEG_QUALITY,
+    );
   });
 }
