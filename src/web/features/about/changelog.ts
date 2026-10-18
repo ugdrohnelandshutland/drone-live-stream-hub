@@ -12,6 +12,16 @@ export interface Release {
 
 export const changelog: readonly Release[] = [
   {
+    version: "0.8.0",
+    date: "2026-10-18",
+    changes: [
+      "Videoaufnahme in der Einzelansicht: „Aufnahme“ starten, „Aufnahme beenden“ – die MP4-Datei wird sofort heruntergeladen. Gleiche Bildqualität wie das Livebild.",
+      "Bei einem Kamerawechsel und nach 10 Minuten beginnt automatisch eine neue Datei („…_teil2.mp4“), damit jede Datei überall abspielbar bleibt.",
+      "Wird der Bildschirm gesperrt, die App gewechselt oder zur Übersicht gewechselt, endet die Aufnahme und die Datei wird gespeichert.",
+      "Standbilder sind deutlich kleiner (JPEG statt PNG).",
+    ],
+  },
+  {
     version: "0.7.0",
     date: "2026-10-12",
     changes: [
