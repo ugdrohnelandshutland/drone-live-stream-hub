@@ -1,6 +1,7 @@
 /**
  * H.264 decoder configuration record and SPS parsing (ISO/IEC 14496-15, ITU-T H.264 7.3.2.1).
- * Only what we need to report codec info: profile, level and coded picture size.
+ * Only what we need to report codec info: profile, level and coded picture size. Plain
+ * Uint8Array (a Buffer is one), so the server and the browser (recording) share it.
  */
 
 export interface AvcConfig {
@@ -14,7 +15,7 @@ export interface AvcConfig {
 
 class BitReader {
   private bitOffset = 0;
-  constructor(private readonly data: Buffer) {}
+  constructor(private readonly data: Uint8Array) {}
 
   readBit(): number {
     const byte = this.data[this.bitOffset >> 3];
@@ -45,8 +46,8 @@ class BitReader {
 }
 
 /** Removes emulation prevention bytes (00 00 03 → 00 00). */
-export function unescapeRbsp(nal: Buffer): Buffer {
-  const out = Buffer.allocUnsafe(nal.length);
+export function unescapeRbsp(nal: Uint8Array): Uint8Array {
+  const out = new Uint8Array(nal.length);
   let length = 0;
   let zeros = 0;
   for (const byte of nal) {
@@ -72,7 +73,7 @@ function skipScalingList(reader: BitReader, size: number): void {
 }
 
 /** Parses an SPS NAL unit (including its 1-byte NAL header) and returns the cropped picture size. */
-export function parseSps(nal: Buffer): {
+export function parseSps(nal: Uint8Array): {
   profileIdc: number;
   levelIdc: number;
   width: number;
@@ -142,15 +143,16 @@ export function parseSps(nal: Buffer): {
 }
 
 /** Parses an AVCDecoderConfigurationRecord (the payload of an AVC sequence header tag). */
-export function parseAvcDecoderConfig(record: Buffer): AvcConfig {
+export function parseAvcDecoderConfig(record: Uint8Array): AvcConfig {
   if (record.length < 7 || record[0] !== 1) throw new RangeError("invalid AVCDecoderConfigurationRecord");
   const numSps = (record[5] ?? 0) & 0x1f;
   if (numSps < 1) throw new RangeError("AVCDecoderConfigurationRecord without SPS");
-  const spsLength = record.readUInt16BE(6);
+  const spsLength = ((record[6] ?? 0) << 8) | (record[7] ?? 0);
   const sps = record.subarray(8, 8 + spsLength);
   if (sps.length !== spsLength) throw new RangeError("AVCDecoderConfigurationRecord truncated");
   const parsed = parseSps(sps);
-  const codecString = `avc1.${sps.subarray(1, 4).toString("hex")}`;
+  const hex = Array.from(sps.subarray(1, 4), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  const codecString = `avc1.${hex}`;
   return { ...parsed, codecString };
 }
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { encodeAmf0String } from "../../src/server/flv/amf0.js";
-import { avcLevelName, avcProfileName } from "../../src/server/flv/avc.js";
-import { compositionTimeOffset, parseVideoTag } from "../../src/server/flv/video.js";
+import { avcLevelName, avcProfileName } from "../../src/shared/flv/avc.js";
+import { compositionTimeOffset, parseVideoTag } from "../../src/shared/flv/video.js";
 import { amfToJson, StreamDiagnostics } from "../../src/server/diagnostics/stream-diagnostics.js";
 import { createLogger } from "../../src/server/logger.js";
 import { DroneRegistry } from "../../src/server/registry/registry.js";

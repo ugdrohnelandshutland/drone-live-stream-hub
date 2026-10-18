@@ -1,5 +1,5 @@
 import type { FlvTag } from "../flv/types.js";
-import { isKeyframe, parseVideoTag, type VideoTagInfo } from "../flv/video.js";
+import { isKeyframe, parseVideoTag, type VideoTagInfo } from "../../shared/flv/video.js";
 
 export interface GopCacheOptions {
   /** Drop the cached GOP if it grows beyond this many bytes (until the next keyframe). */

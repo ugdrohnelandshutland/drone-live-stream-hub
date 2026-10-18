@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { parseAvcDecoderConfig, parseSps, unescapeRbsp } from "../../src/server/flv/avc.js";
-import { isKeyframe, parseVideoTag } from "../../src/server/flv/video.js";
+import { parseAvcDecoderConfig, parseSps, unescapeRbsp } from "../../src/shared/flv/avc.js";
+import { isKeyframe, parseVideoTag } from "../../src/shared/flv/video.js";
 
 // Real SPS NAL units from `ffmpeg -f lavfi -i testsrc2=s=WxH -c:v libx264 -profile:v <profile>`.
 const SPS_1080P_HIGH = Buffer.from("67640028acd940780227e5c044000003000400000300f03c60c658", "hex");
@@ -30,7 +30,9 @@ describe("parseSps", () => {
 
 describe("unescapeRbsp", () => {
   it("removes emulation prevention bytes", () => {
-    expect(unescapeRbsp(Buffer.from("0000030100000302", "hex")).toString("hex")).toBe("000001000002");
+    expect(Buffer.from(unescapeRbsp(Buffer.from("0000030100000302", "hex"))).toString("hex")).toBe(
+      "000001000002",
+    );
   });
 });
 

@@ -1,6 +1,7 @@
 /**
  * Parsing of FLV video tag headers, legacy (codec id 7 = AVC, 12 = HEVC) and
- * Enhanced RTMP (FourCC-based, e.g. "hvc1").
+ * Enhanced RTMP (FourCC-based, e.g. "hvc1"). Plain Uint8Array (a Buffer is one), so the
+ * server and the browser (recording) share it.
  */
 
 export type VideoCodec = "avc" | "hevc" | "av1" | "vp9" | "unknown";
@@ -33,7 +34,7 @@ const FOURCC_CODECS: Record<string, VideoCodec> = {
   vp09: "vp9",
 };
 
-export function parseVideoTag(data: Buffer): VideoTagInfo | undefined {
+export function parseVideoTag(data: Uint8Array): VideoTagInfo | undefined {
   const b0 = data[0];
   if (b0 === undefined) return undefined;
   const enhanced = (b0 & 0x80) !== 0;
@@ -41,7 +42,7 @@ export function parseVideoTag(data: Buffer): VideoTagInfo | undefined {
 
   if (enhanced) {
     if (data.length < 5) return undefined;
-    const codec = FOURCC_CODECS[data.toString("latin1", 1, 5)] ?? "unknown";
+    const codec = FOURCC_CODECS[String.fromCharCode(...data.subarray(1, 5))] ?? "unknown";
     const rawPacketType = b0 & 0x0f;
     let packetType: VideoPacketType;
     let payloadOffset = 5;
@@ -88,8 +89,14 @@ export function isKeyframe(info: VideoTagInfo): boolean {
  * Composition time offset (pts - dts) of a coded AVC/HEVC frame in ms; non-zero means the
  * encoder uses B-frames. 0 for other tags and codecs.
  */
-export function compositionTimeOffset(data: Buffer, info: VideoTagInfo): number {
+export function compositionTimeOffset(data: Uint8Array, info: VideoTagInfo): number {
   if (info.packetType !== "coded-frame" || (info.codec !== "avc" && info.codec !== "hevc")) return 0;
-  if (!info.enhanced) return data.length >= 5 ? data.readIntBE(2, 3) : 0;
-  return info.payloadOffset === 8 && data.length >= 8 ? data.readIntBE(5, 3) : 0;
+  if (!info.enhanced) return data.length >= 5 ? readInt24(data, 2) : 0;
+  return info.payloadOffset === 8 && data.length >= 8 ? readInt24(data, 5) : 0;
+}
+
+/** Signed 24-bit big-endian integer. */
+function readInt24(data: Uint8Array, offset: number): number {
+  const value = ((data[offset] ?? 0) << 16) | ((data[offset + 1] ?? 0) << 8) | (data[offset + 2] ?? 0);
+  return value & 0x800000 ? value - 0x1000000 : value;
 }

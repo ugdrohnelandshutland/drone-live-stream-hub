@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 import { describeSequenceHeader } from "../server/flv/describe.js";
 import { FlvTagType } from "../server/flv/types.js";
-import { isKeyframe, parseVideoTag } from "../server/flv/video.js";
+import { isKeyframe, parseVideoTag } from "../shared/flv/video.js";
 import { CloseCode } from "../shared/close-codes.js";
 import { FlvViewer, type ViewerTag } from "./flv-viewer.js";
 

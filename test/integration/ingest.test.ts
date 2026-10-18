@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { parseAvcDecoderConfig } from "../../src/server/flv/avc.js";
+import { parseAvcDecoderConfig } from "../../src/shared/flv/avc.js";
 import { parseScriptTag } from "../../src/server/flv/script.js";
 import { FlvTagType, type FlvTag } from "../../src/server/flv/types.js";
-import { isKeyframe, parseVideoTag } from "../../src/server/flv/video.js";
+import { isKeyframe, parseVideoTag } from "../../src/shared/flv/video.js";
 import { NmsIngestAdapter } from "../../src/server/ingest/nms-adapter.js";
 import { createLogger } from "../../src/server/logger.js";
 import { SimulatedDrone } from "../../src/sim/drone.js";

@@ -1,8 +1,8 @@
 import type { Amf0Value } from "../flv/amf0.js";
-import { avcLevelName, avcProfileName, parseAvcDecoderConfig } from "../flv/avc.js";
+import { avcLevelName, avcProfileName, parseAvcDecoderConfig } from "../../shared/flv/avc.js";
 import { isMetadataObject, parseScriptTag } from "../flv/script.js";
 import type { FlvTag } from "../flv/types.js";
-import { compositionTimeOffset, isKeyframe, parseVideoTag } from "../flv/video.js";
+import { compositionTimeOffset, isKeyframe, parseVideoTag } from "../../shared/flv/video.js";
 import type { IngestAdapter } from "../ingest/types.js";
 import type { Logger } from "../logger.js";
 import type { DroneRegistry } from "../registry/registry.js";

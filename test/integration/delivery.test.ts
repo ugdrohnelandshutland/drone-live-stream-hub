@@ -6,7 +6,7 @@ import { createService, type Service } from "../../src/server/app.js";
 import type { AppConfig } from "../../src/server/config.js";
 import { parseScriptTag } from "../../src/server/flv/script.js";
 import { FlvTagType } from "../../src/server/flv/types.js";
-import { isKeyframe, parseVideoTag } from "../../src/server/flv/video.js";
+import { isKeyframe, parseVideoTag } from "../../src/shared/flv/video.js";
 import { createLogger } from "../../src/server/logger.js";
 import { CloseCode } from "../../src/shared/close-codes.js";
 import { SimulatedDrone } from "../../src/sim/drone.js";

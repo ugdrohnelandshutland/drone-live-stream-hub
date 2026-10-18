@@ -1,6 +1,6 @@
 import type { DroneVideoInfo } from "../../shared/api.js";
-import { parseAvcDecoderConfig } from "./avc.js";
-import { parseVideoTag } from "./video.js";
+import { parseAvcDecoderConfig } from "../../shared/flv/avc.js";
+import { parseVideoTag } from "../../shared/flv/video.js";
 
 /**
  * Codec info from a video sequence header tag body, or undefined if `data` is not one.
