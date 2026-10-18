@@ -79,9 +79,39 @@ export function snapshotCaption(name: string, droneId: string, date: Date): stri
   return `${who} · ${formatDateTime(date)}`;
 }
 
-/** "2026-10-10_14-03-07_m30t-01.jpg": sorts by time across drones, safe on every file system. */
-export function snapshotFileName(droneId: string, date: Date): string {
+/** "2026-10-10_14-03-07": sorts by time, safe on every file system. */
+function fileStamp(date: Date): string {
   const day = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   const time = `${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
-  return `${day}_${time}_${droneId}.jpg`;
+  return `${day}_${time}`;
+}
+
+/** "2026-10-10_14-03-07_m30t-01.jpg": sorts by time across drones. */
+export function snapshotFileName(droneId: string, date: Date): string {
+  return `${fileStamp(date)}_${droneId}.jpg`;
+}
+
+/**
+ * "2026-10-10_14-03-07_m30t-01.mp4", named after the start of the recording; later parts
+ * (camera switch, length limit) "…_m30t-01_teil2.mp4", so they sort right after it.
+ */
+export function recordingFileName(droneId: string, startedAt: Date, part: number): string {
+  return `${fileStamp(startedAt)}_${droneId}${part > 1 ? `_teil${part}` : ""}.mp4`;
+}
+
+/** Running time of a recording: "03:12", "1:02:03". */
+export function formatRecordingTime(ms: number): string {
+  const total = Math.floor(ms / 1000);
+  const hours = Math.floor(total / 3600);
+  const clock = `${pad(Math.floor((total % 3600) / 60))}:${pad(total % 60)}`;
+  return hours > 0 ? `${hours}:${clock}` : clock;
+}
+
+/** "0,4 MB", "180 MB", "1,2 GB" (decimal units, as file managers show them). */
+export function formatFileSize(bytes: number): string {
+  const decimal = (value: number) =>
+    value.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  if (bytes >= 1e9) return `${decimal(bytes / 1e9)} GB`;
+  if (bytes < 1e7) return `${decimal(bytes / 1e6)} MB`;
+  return `${Math.round(bytes / 1e6)} MB`;
 }

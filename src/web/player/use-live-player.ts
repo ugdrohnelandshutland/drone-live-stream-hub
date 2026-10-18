@@ -1,5 +1,11 @@
 import { useEffect, useEffectEvent, useState } from "react";
-import { LivePlayer, type LatencyTuning, type PlayerStatus, type StreamMode } from "./live-player";
+import {
+  LivePlayer,
+  type LatencyTuning,
+  type PlayerStatus,
+  type StreamEvent,
+  type StreamMode,
+} from "./live-player";
 
 export interface LivePlayerHookOptions {
   /** WebSocket URL of the stream; undefined keeps no player running. */
@@ -7,6 +13,8 @@ export interface LivePlayerHookOptions {
   mode?: StreamMode | undefined;
   tuning?: Partial<LatencyTuning> | undefined;
   onStatus?: ((status: PlayerStatus) => void) | undefined;
+  /** Raw WebSocket events (recording). */
+  onStreamEvent?: ((event: StreamEvent) => void) | undefined;
 }
 
 /**
@@ -15,10 +23,11 @@ export interface LivePlayerHookOptions {
  */
 export function useLivePlayer(
   video: HTMLVideoElement | null,
-  { url, mode = "full", tuning, onStatus }: LivePlayerHookOptions,
+  { url, mode = "full", tuning, onStatus, onStreamEvent }: LivePlayerHookOptions,
 ): PlayerStatus {
   const [status, setStatus] = useState<PlayerStatus>("connecting");
   const reportStatus = useEffectEvent((next: PlayerStatus) => onStatus?.(next));
+  const reportStreamEvent = useEffectEvent((event: StreamEvent) => onStreamEvent?.(event));
 
   // Compare by value: callers usually build the tuning object during render.
   const tuningKey = JSON.stringify(tuning ?? {});
@@ -34,6 +43,7 @@ export function useLivePlayer(
         setStatus(next);
         reportStatus(next);
       },
+      onStreamEvent: reportStreamEvent,
     });
     player.start();
     return () => {

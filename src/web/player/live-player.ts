@@ -48,6 +48,12 @@ export const DEFAULT_TUNING: LatencyTuning = {
  */
 export type StreamMode = "full" | "keyframes";
 
+/** What the player's WebSocket receives, for consumers of the raw stream (recording). */
+export type StreamEvent =
+  | { type: "open" } // a new connection: FLV header, cached GOP, then live tags
+  | { type: "data"; chunk: ArrayBuffer } // whole FLV tags
+  | { type: "close"; code: number };
+
 export interface LivePlayerOptions {
   video: HTMLVideoElement;
   url: string;
@@ -56,6 +62,8 @@ export interface LivePlayerOptions {
   onStatus: (status: PlayerStatus) => void;
   /** Called for every presented frame (requestVideoFrameCallback). */
   onFrame?: (metadata: VideoFrameCallbackMetadata) => void;
+  /** Every WebSocket event of the current player; not called for an aborted socket. */
+  onStreamEvent?: ((event: StreamEvent) => void) | undefined;
 }
 
 export function isLivePlaybackSupported(): boolean {
@@ -109,6 +117,7 @@ const UNKNOWN_DRONE_RETRY_MS = 30_000;
 interface LoaderEvents {
   onOpen: () => void;
   onClose: (code: number) => void;
+  onStream: (event: StreamEvent) => void;
 }
 
 /**
@@ -133,10 +142,12 @@ function createLoaderClass(events: LoaderEvents): mpegts.CustomLoaderConstructor
       this._status = mpegts.LoaderStatus.kConnecting;
       ws.onopen = () => {
         this._status = mpegts.LoaderStatus.kBuffering;
+        events.onStream({ type: "open" });
         events.onOpen();
       };
       ws.onmessage = (event: MessageEvent<ArrayBuffer>) => {
         const chunk = event.data;
+        events.onStream({ type: "data", chunk });
         const byteStart = this.received;
         this.received += chunk.byteLength;
         this.onDataArrival?.(chunk, byteStart, this.received);
@@ -144,6 +155,7 @@ function createLoaderClass(events: LoaderEvents): mpegts.CustomLoaderConstructor
       ws.onclose = (event) => {
         if (this.aborted) return;
         this._status = mpegts.LoaderStatus.kComplete;
+        events.onStream({ type: "close", code: event.code });
         events.onClose(event.code);
       };
       // An error is always followed by close, which carries the code.
@@ -234,6 +246,9 @@ export class LivePlayer {
       },
       onClose: (code) => {
         if (current()) this.handleClose(code);
+      },
+      onStream: (event) => {
+        if (current()) this.options.onStreamEvent?.(event);
       },
     });
     const player = mpegts.createPlayer(

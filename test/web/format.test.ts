@@ -7,6 +7,9 @@ import {
   formatDate,
   formatSince,
   formatVideo,
+  formatFileSize,
+  formatRecordingTime,
+  recordingFileName,
   snapshotCaption,
   snapshotFileName,
 } from "../../src/web/lib/format";
@@ -65,5 +68,21 @@ describe("web format helpers", () => {
     expect(snapshotCaption("Drohne 1", "m30t-01", at)).toBe("Drohne 1 (m30t-01) · 10.10.2026 09:05:07 Uhr");
     expect(snapshotCaption("m30t-01", "m30t-01", at)).toBe("m30t-01 · 10.10.2026 09:05:07 Uhr");
     expect(snapshotFileName("m30t-01", at)).toBe("2026-10-10_09-05-07_m30t-01.jpg");
+  });
+
+  it("names recordings and their parts", () => {
+    const at = new Date(2026, 9, 10, 9, 5, 7);
+    expect(recordingFileName("m30t-01", at, 1)).toBe("2026-10-10_09-05-07_m30t-01.mp4");
+    expect(recordingFileName("m30t-01", at, 2)).toBe("2026-10-10_09-05-07_m30t-01_teil2.mp4");
+  });
+
+  it("formats recording time and size", () => {
+    expect(formatRecordingTime(0)).toBe("00:00");
+    expect(formatRecordingTime(192_400)).toBe("03:12");
+    expect(formatRecordingTime(3_723_000)).toBe("1:02:03");
+    expect(formatFileSize(0)).toBe("0,0 MB");
+    expect(formatFileSize(420_000)).toBe("0,4 MB");
+    expect(formatFileSize(180_400_000)).toBe("180 MB");
+    expect(formatFileSize(1_234_000_000)).toBe("1,2 GB");
   });
 });

@@ -43,10 +43,18 @@ Devices: Chrome on Android tablet · Chrome on iPad (iPadOS ≥ 17.1) · Chrome 
 - [ ] In fullscreen the strip is hidden and the picture fills the screen; a tap shows the strip,
       a second tap or 4 s without input hide it; with a mouse, only the top area shows it (not
       moves elsewhere). iPad: Safari's own close button does not cover a control of the strip
+- [ ] Recording: "Aufnahme" → badge "REC – warte auf Bild", then "REC 00:05 · …";
+      "Aufnahme beenden" downloads an MP4 that plays (Windows Films & TV / VLC, iPad Dateien
+      app, Android gallery) with the picture of the recorded time
+- [ ] Recording with camera switch (`--switch-every 8`): one file per camera ("…_teil2.mp4"),
+      each plays with its own resolution; toast "Teil n gespeichert – Aufnahme läuft weiter"
+- [ ] Recording, then lock the screen (or switch app/tab): the file is downloaded, the
+      recording has ended after unlocking; "Übersicht" also ends and downloads it
+- [ ] iPad: download of the MP4 (confirmation dialog, file in Dateien → Downloads)
 - [ ] App/tab in background > 10 s, then back: picture is live again (no old frames)
 - [ ] Wi-Fi off/on on the device: "Verbindung gestört", then recovers
 - [ ] `/drone/xyz`: "Unbekannte Drohne"
-- [ ] Kiosk `/drone/<id>?kiosk`: no back button, no still image, larger strip; survives
+- [ ] Kiosk `/drone/<id>?kiosk`: no back button, no still image, no recording, larger strip; survives
       drone off/on for 10 minutes; reloads by itself after a service update
 
 ## Unsupported browsers

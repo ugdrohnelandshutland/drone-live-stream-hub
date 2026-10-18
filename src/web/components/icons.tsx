@@ -35,6 +35,22 @@ export function CameraIcon() {
   );
 }
 
+export function RecordIcon() {
+  return (
+    <Svg>
+      <circle cx="12" cy="12" r="6.5" fill="currentColor" stroke="none" />
+    </Svg>
+  );
+}
+
+export function StopIcon() {
+  return (
+    <Svg>
+      <rect x="6" y="6" width="12" height="12" fill="currentColor" stroke="none" />
+    </Svg>
+  );
+}
+
 export function FullscreenIcon({ exit = false }: { exit?: boolean }) {
   return (
     <Svg>

@@ -1,5 +1,5 @@
 import { useCallback, useState, type Ref } from "react";
-import type { LatencyTuning, PlayerStatus, StreamMode } from "./live-player";
+import type { LatencyTuning, PlayerStatus, StreamEvent, StreamMode } from "./live-player";
 import { useLivePlayer } from "./use-live-player";
 
 interface LiveVideoProps {
@@ -9,6 +9,8 @@ interface LiveVideoProps {
   mode?: StreamMode | undefined;
   tuning?: Partial<LatencyTuning> | undefined;
   onStatus: (status: PlayerStatus) => void;
+  /** Raw WebSocket events of the player (recording). */
+  onStreamEvent?: ((event: StreamEvent) => void) | undefined;
   /** The <video> element, for callers that read frames from it (still image, stats). */
   ref?: Ref<HTMLVideoElement>;
   className?: string;
@@ -18,9 +20,9 @@ interface LiveVideoProps {
  * A muted live <video> with its own player. Owning the element here keeps element and player
  * in step: a new element always gets a new player.
  */
-export function LiveVideo({ url, mode, tuning, onStatus, ref, className }: LiveVideoProps) {
+export function LiveVideo({ url, mode, tuning, onStatus, onStreamEvent, ref, className }: LiveVideoProps) {
   const [video, setVideo] = useState<HTMLVideoElement | null>(null);
-  useLivePlayer(video, { url, mode, tuning, onStatus });
+  useLivePlayer(video, { url, mode, tuning, onStatus, onStreamEvent });
 
   const attach = useCallback(
     (node: HTMLVideoElement | null) => {

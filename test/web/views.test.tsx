@@ -127,10 +127,27 @@ describe("single view", () => {
     expect(button.disabled).toBe(false);
   });
 
-  it("hides navigation and the still image in kiosk mode", () => {
+  it("starts and stops a recording", () => {
+    const { container } = renderApp("/drone/m30t-01");
+    const start = screen.getByRole<HTMLButtonElement>("button", { name: "Aufnahme" });
+    expect(start.disabled).toBe(true);
+    act(() => FakePlayer.only().emit("playing"));
+    act(() => start.click());
+
+    // No frames from the fake player: the recording waits for a keyframe.
+    expect(container.querySelector(".recording-indicator")?.textContent).toBe("REC – warte auf Bild");
+    const stop = screen.getByRole<HTMLButtonElement>("button", { name: "Aufnahme beenden" });
+    expect(stop.getAttribute("aria-pressed")).toBe("true");
+    act(() => stop.click());
+    expect(container.querySelector(".recording-indicator")).toBeNull();
+    expect(screen.getByRole("button", { name: "Aufnahme" })).toBeTruthy();
+  });
+
+  it("hides navigation, still image and recording in kiosk mode", () => {
     renderApp("/drone/m30t-01", "?kiosk");
     expect(screen.queryByRole("link", { name: "Übersicht" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Standbild" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Aufnahme" })).toBeNull();
   });
 });
 

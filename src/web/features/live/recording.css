@@ -1,0 +1,49 @@
+/* Video recording (single view): button state and the "REC" badge on the picture. */
+
+.record-button[data-recording] {
+  color: var(--fault-text);
+}
+
+.recording-indicator {
+  position: absolute;
+  z-index: 2;
+  top: var(--space-3);
+  left: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: rgb(0 0 0 / 0.75);
+  color: var(--on-bezel);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.recording-dot {
+  width: 0.75em;
+  height: 0.75em;
+  border-radius: 50%;
+  background: var(--fault);
+  animation: recording-blink 1s steps(1) infinite;
+}
+
+/* Waiting for a picture: hollow, so it does not look like a running recording. */
+.recording-indicator[data-state="waiting"] .recording-dot {
+  border: 2px solid var(--fault);
+  background: none;
+}
+
+@keyframes recording-blink {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recording-dot {
+    animation: none;
+  }
+}

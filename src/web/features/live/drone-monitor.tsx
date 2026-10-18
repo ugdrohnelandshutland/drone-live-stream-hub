@@ -1,11 +1,17 @@
 import { useLayoutEffect, useRef, useState, type RefObject } from "react";
 import type { DroneStatus } from "../../../shared/api";
 import { DroneStrip } from "../../components/drone-strip";
-import { BackIcon, CameraIcon } from "../../components/icons";
+import { BackIcon, CameraIcon, RecordIcon, StopIcon } from "../../components/icons";
 import { PictureOverlay } from "../../components/picture-overlay";
 import { Toast, useToast } from "../../components/toast";
 import { downloadBlob } from "../../lib/download";
-import { droneFacts, snapshotCaption, snapshotFileName } from "../../lib/format";
+import {
+  droneFacts,
+  formatFileSize,
+  formatRecordingTime,
+  snapshotCaption,
+  snapshotFileName,
+} from "../../lib/format";
 import { captureSnapshot } from "../../lib/snapshot";
 import { navigateOnClick } from "../../navigation";
 import type { PlayerStatus } from "../../player/live-player";
@@ -23,6 +29,8 @@ import { t } from "../../strings";
 import { FullscreenButton } from "./fullscreen-button";
 import { useFullscreenStrip, useIsFullscreen } from "./use-fullscreen-strip";
 import { StatsPanel } from "./stats-panel";
+import { useRecording, type Recording } from "./use-recording";
+import "./recording.css";
 
 interface DroneMonitorProps {
   drone: DroneStatus;
@@ -52,6 +60,9 @@ export function DroneMonitor({ drone, slot, focused, dataSaver, options }: Drone
   useExitFullscreenWhenUnfocused(rootRef, focused);
   const fullscreen = useIsFullscreen(rootRef) && focused;
   const strip = useFullscreenStrip(fullscreen);
+  // No file handling on the fixed kiosk touchscreen.
+  const files = focused && !options.kiosk;
+  const recording = useRecording(drone.id, files, showToast);
 
   // Focused: always connected — the server holds the socket until the drone is up, so the
   // picture appears the moment it is. Tiles connect only while the drone is live.
@@ -89,8 +100,10 @@ export function DroneMonitor({ drone, slot, focused, dataSaver, options }: Drone
           mode={mode}
           tuning={options.tuning}
           onStatus={setPlayerStatus}
+          onStreamEvent={recording.onStreamEvent}
         />
         <PictureOverlay view={view} />
+        {files && recording.state !== "idle" && <RecordingIndicator recording={recording} />}
         {focused && options.stats && video && (
           <StatsPanel video={video} playing={playerStatus === "playing"} />
         )}
@@ -108,14 +121,16 @@ export function DroneMonitor({ drone, slot, focused, dataSaver, options }: Drone
               leading: !options.kiosk && <BackLink />,
               actions: (
                 <>
-                  {/* No file handling on the fixed kiosk touchscreen. */}
-                  {!options.kiosk && (
-                    <SnapshotButton
-                      video={video}
-                      drone={drone}
-                      enabled={status === "playing"}
-                      onDone={showToast}
-                    />
+                  {files && (
+                    <>
+                      <SnapshotButton
+                        video={video}
+                        drone={drone}
+                        enabled={status === "playing"}
+                        onDone={showToast}
+                      />
+                      <RecordButton recording={recording} enabled={status === "playing"} />
+                    </>
                   )}
                   <FullscreenButton target={rootRef} active={fullscreen} />
                 </>
@@ -201,5 +216,36 @@ function SnapshotButton(props: {
       <CameraIcon />
       <span className="button-label">{t.single.snapshot}</span>
     </button>
+  );
+}
+
+/** Start needs a picture; a running recording can always be stopped. */
+function RecordButton({ recording, enabled }: { recording: Recording; enabled: boolean }) {
+  const active = recording.state !== "idle";
+  return (
+    <button
+      type="button"
+      className="strip-button record-button"
+      data-recording={active || undefined}
+      aria-pressed={active}
+      disabled={!active && !enabled}
+      onClick={active ? recording.stop : recording.start}
+    >
+      {active ? <StopIcon /> : <RecordIcon />}
+      <span className="button-label">{active ? t.single.recordStop : t.single.record}</span>
+    </button>
+  );
+}
+
+function RecordingIndicator({ recording }: { recording: Recording }) {
+  const text =
+    recording.state === "waiting"
+      ? t.single.recordWaiting
+      : t.single.recordRunning(formatRecordingTime(recording.durationMs), formatFileSize(recording.bytes));
+  return (
+    <div className="recording-indicator" data-state={recording.state}>
+      <span className="recording-dot" aria-hidden="true" />
+      {text}
+    </div>
   );
 }

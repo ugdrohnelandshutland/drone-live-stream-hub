@@ -33,7 +33,7 @@ DJI M30T ──(O3 radio)──> DJI RC Plus (Pilot 2) ──(RTMP over Wi-Fi)�
 
 ### Explicit non-goals (later extensions — do not build now)
 
-Virtual camera, Microsoft Teams (RTMP-In), HDMI capture, recording, image analysis, transcoding, WebRTC, HLS. Keep the architecture open for them (the service is the single distribution point), but write no code for them.
+Virtual camera, Microsoft Teams (RTMP-In), HDMI capture, server-side recording, image analysis, transcoding, WebRTC, HLS. (Recording in the browser, start/stop with MP4 download, exists since ADR 0011.) Keep the architecture open for them (the service is the single distribution point), but write no code for them.
 
 ## 2. Hard constraints
 
@@ -85,7 +85,7 @@ One Node.js process with four modules. The RTMP library is used **only for inges
 
 ### Web UI (`src/web/`)
 
-- Built with **Vite** + TypeScript + **React 19** (ADR 0005), structured and designed per ADR 0006 and 0007 (switching between overview and a drone keeps the picture running — no page load, no reconnect; with "Datensparen" on, tiles get keyframes only and the tapped drone switches to the full stream, ADR 0009): feature folders, one SSE store per page, `player/` framework-free except `use-live-player.ts`/`live-video.tsx`, German text in `strings.ts`, plain CSS per component with tokens in `styles/tokens.css`. Output to `dist/web/`, served by the service.
+- Built with **Vite** + TypeScript + **React 19** (ADR 0005), structured and designed per ADR 0006 and 0007 (switching between overview and a drone keeps the picture running — no page load, no reconnect; with "Datensparen" on, tiles get keyframes only and the tapped drone switches to the full stream, ADR 0009): feature folders, one SSE store per page, `player/` framework-free except `use-live-player.ts`/`live-video.tsx`, German text in `strings.ts`, plain CSS per component with tokens in `styles/tokens.css`; video recording in the browser in `recording/` (framework-free, ADR 0011). Output to `dist/web/`, served by the service.
 - German UI text, large touch targets, works at tablet and 1080p touchscreen size. Users are BOS / Einsatzleitung; Tag/Nacht colour schemes; system fonts only.
 - Views:
   - `/` **Overview**: one tile per configured drone, showing name, state and a muted live preview while live. Updates live via SSE without page reload.
@@ -160,7 +160,7 @@ If the drone is offline when a viewer connects, keep the socket open and start s
 │  └─ web/
 │     ├─ index.html
 │     ├─ main.tsx, app.tsx, routes.ts, strings.ts
-│     ├─ service/ player/ lib/ components/ styles/
+│     ├─ service/ player/ recording/ lib/ components/ styles/
 │     └─ features/         # live/ (overview + single view, ADR 0007), diagnostics/
 │  └─ sim/                 # drone simulator, chaos proxy, viewer load tester (dev/test only)
 │     ├─ cli.ts
