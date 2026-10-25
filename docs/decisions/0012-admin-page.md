@@ -53,7 +53,10 @@ paused. Everyone in the field Wi-Fi can reach the service, so the controls need 
   (camera switch or new RC session), rejected stream keys, device online/offline/paused/
   released/reloaded/renamed. Not written to disk (the service log has everything). The
   server stores structured events; the page writes the German text.
-- **PIN.** Optional `adminPin` in `drones.json` (4–12 digits, as a string). Without it,
+- **PIN.** Optional `adminPin` in `drones.json` (4–12 digits, as a string), or the
+  environment variable `DLSH_ADMIN_PIN`, which wins over the file (Docker: the PIN stays out
+  of the image and needs no mounted config). The log and `--check-config` say where the PIN
+  came from, never the PIN. Without one,
   `/api/admin/*` answers 404 and the page explains how to switch it on.
   `POST /api/admin/login` with the right PIN sets an `HttpOnly`, `SameSite=Strict` session
   cookie (random token, in memory, valid until the service restarts). Five wrong PINs in a row

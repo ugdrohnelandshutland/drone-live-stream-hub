@@ -10,6 +10,9 @@ services:
         DLSH_COMMIT: ${DLSH_COMMIT:-}
     # Built from this repository, never pulled (Portainer runs `compose pull` first).
     pull_policy: build
+    environment:
+      # Admin page /admin (ADR 0012): 4-12 digits; empty keeps it off.
+      DLSH_ADMIN_PIN: ${DLSH_ADMIN_PIN:-}
     ports:
       # Web UI + video. The container port stays 8080; change only the host side.
       - "${DLSH_HTTP_PORT:-18080}:8080"

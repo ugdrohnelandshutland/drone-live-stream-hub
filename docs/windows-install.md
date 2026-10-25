@@ -62,7 +62,8 @@ Editor über „Als Administrator ausführen“ öffnen):
   RC Plus und Teil der Kiosk-URL `/drone/<id>`.
 - `name`: wird in der Weboberfläche angezeigt.
 - `adminPin` (optional): schaltet die Verwaltung ein (siehe unten), z. B.
-  `"adminPin": "4711"` – 4 bis 12 Ziffern, **in Anführungszeichen**.
+  `"adminPin": "4711"` – 4 bis 12 Ziffern, **in Anführungszeichen**. Alternativ setzt die
+  Umgebungsvariable `DLSH_ADMIN_PIN` die PIN; sie hat Vorrang vor der Datei (gedacht für Docker).
 
 Danach den Dienst neu starten (Administrator-PowerShell): `Restart-Service DroneLiveStreamHub`.
 Wurde ein **Port** geändert, `install.cmd` erneut ausführen, damit die Firewall-Regeln passen.

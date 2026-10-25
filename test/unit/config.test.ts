@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  applyEnvOverrides,
   ConfigError,
   loadConfig,
   parseConfig,
@@ -114,5 +115,23 @@ describe("resolveDataDir", () => {
     expect(resolveDataDir(["--data-dir=z"], {}, configPath)).toBe(path.resolve("z"));
     expect(resolveDataDir([], { DLSH_DATA_DIR: "y" }, configPath)).toBe(path.resolve("y"));
     expect(() => resolveDataDir(["--data-dir"], {}, configPath)).toThrow(ConfigError);
+  });
+});
+
+describe("applyEnvOverrides", () => {
+  const base = parseConfig(valid);
+
+  it("takes the admin PIN from DLSH_ADMIN_PIN before the file", () => {
+    const fromFile = { ...base, adminPin: "1111" };
+    expect(applyEnvOverrides(fromFile, { DLSH_ADMIN_PIN: "0042" })).toEqual({
+      config: { ...base, adminPin: "0042" },
+      adminPinSource: "env",
+    });
+    expect(applyEnvOverrides(fromFile, { DLSH_ADMIN_PIN: " " }).adminPinSource).toBe("config");
+    expect(applyEnvOverrides(base, {})).toEqual({ config: base, adminPinSource: undefined });
+  });
+
+  it("rejects an invalid PIN from the environment", () => {
+    expect(() => applyEnvOverrides(base, { DLSH_ADMIN_PIN: "12a4" })).toThrow(/DLSH_ADMIN_PIN/);
   });
 });

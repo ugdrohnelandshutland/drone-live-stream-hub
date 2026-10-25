@@ -10,6 +10,8 @@ const droneSchema = z.object({
 });
 
 const portSchema = z.number().int().min(1).max(65535);
+const ADMIN_PIN_PATTERN = /^\d{4,12}$/;
+const adminPinSchema = z.string().regex(ADMIN_PIN_PATTERN, "must be 4 to 12 digits, in quotes");
 
 export const configSchema = z
   .object({
@@ -17,10 +19,7 @@ export const configSchema = z
     httpPort: portSchema.default(8080),
     drones: z.array(droneSchema).min(1),
     /** Enables the admin page (ADR 0012). A string, so leading zeros count. */
-    adminPin: z
-      .string()
-      .regex(/^\d{4,12}$/, "must be 4 to 12 digits, in quotes")
-      .optional(),
+    adminPin: adminPinSchema.optional(),
   })
   .strict()
   .superRefine((config, ctx) => {
@@ -43,6 +42,7 @@ export type DroneConfig = AppConfig["drones"][number];
 export const CONFIG_ENV_VAR = "DLSH_CONFIG";
 export const DEFAULT_CONFIG_PATH = path.join("config", "drones.json");
 export const DATA_DIR_ENV_VAR = "DLSH_DATA_DIR";
+export const ADMIN_PIN_ENV_VAR = "DLSH_ADMIN_PIN";
 
 export class ConfigError extends Error {
   override readonly name = "ConfigError";
@@ -110,4 +110,24 @@ export async function loadConfig(filePath: string): Promise<AppConfig> {
     throw new ConfigError(`Config file ${filePath} is not valid JSON: ${(err as Error).message}`);
   }
   return parseConfig(raw, filePath);
+}
+
+export type AdminPinSource = "env" | "config" | undefined;
+
+/**
+ * `DLSH_ADMIN_PIN` overrides `adminPin` from the file (Docker: the PIN stays out of the image
+ * and needs no mounted config). Empty counts as not set. Same rule as in the file.
+ */
+export function applyEnvOverrides(
+  config: AppConfig,
+  env: NodeJS.ProcessEnv,
+): { config: AppConfig; adminPinSource: AdminPinSource } {
+  const pin = env[ADMIN_PIN_ENV_VAR]?.trim();
+  if (pin) {
+    if (!ADMIN_PIN_PATTERN.test(pin)) {
+      throw new ConfigError(`Invalid ${ADMIN_PIN_ENV_VAR}: must be 4 to 12 digits.`);
+    }
+    return { config: { ...config, adminPin: pin }, adminPinSource: "env" };
+  }
+  return { config, adminPinSource: config.adminPin !== undefined ? "config" : undefined };
 }

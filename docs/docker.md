@@ -30,11 +30,15 @@ Settings (environment variables or an `.env` file next to `compose.yaml`):
 | `DLSH_RTMP_PORT`  | `1935`          | Host port for RTMP, only if the port line in `compose.yaml` is enabled    |
 | `DLSH_SIM_DRONES` | `3`             | Number of simulated drones (ids `m30t-01`…; the example config has three) |
 | `TZ`              | `Europe/Berlin` | Clock in the simulated video overlay                                      |
+| `DLSH_ADMIN_PIN`  | (empty)         | PIN for the admin page `/admin` (4–12 digits); empty keeps it off         |
 
 The simulator streams 720p at 1.5 Mbit/s per drone and switches the camera every 30 s. The
 overview plays all drones at once, so each viewer needs about drones × 1.5 Mbit/s;
 `?previews=0` turns the previews off. The simulator needs 2–3 CPU cores for three drones; the
 service itself needs very little.
+
+The admin page (ADR 0012) keeps device names in `/app/data`; mount a volume there
+(`- dlsh-data:/app/data`) to keep them when the container is recreated.
 
 Own drone list: enable the `volumes` lines under `hub` in `compose.yaml` and put a
 `config/drones.json` next to it. Real RC Plus: enable the RTMP port line.
