@@ -9,14 +9,14 @@ export class SseClient {
   private readonly controller = new AbortController();
   readonly done: Promise<void>;
 
-  constructor(url: string) {
-    this.done = this.run(url).catch((err: unknown) => {
+  constructor(url: string, headers: Record<string, string> = {}) {
+    this.done = this.run(url, headers).catch((err: unknown) => {
       if ((err as Error).name !== "AbortError") throw err;
     });
   }
 
-  private async run(url: string): Promise<void> {
-    const res = await fetch(url, { signal: this.controller.signal });
+  private async run(url: string, headers: Record<string, string>): Promise<void> {
+    const res = await fetch(url, { signal: this.controller.signal, headers });
     if (!res.body) throw new Error("no SSE body");
     const decoder = new TextDecoder();
     let buffer = "";

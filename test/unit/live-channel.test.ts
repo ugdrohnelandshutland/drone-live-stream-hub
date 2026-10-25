@@ -11,6 +11,7 @@ class FakeViewer implements ViewerConnection {
   readonly id = `v${FakeViewer.next++}`;
   bufferedAmount = 0;
   closed: { code: number; reason: string } | undefined;
+  dropped = 0;
   private parser = new FlvStreamParser();
   tags: FlvTag[] = [];
 
@@ -20,6 +21,10 @@ class FakeViewer implements ViewerConnection {
 
   close(code: number, reason: string): void {
     this.closed = { code, reason };
+  }
+
+  noteDropped(): void {
+    this.dropped++;
   }
 }
 
@@ -131,6 +136,24 @@ describe("LiveChannel", () => {
       keyframe(2000),
       interframe(2033),
     ]);
+    // Reported to the connection too (connection quality on the admin page).
+    expect([slow.dropped, fast.dropped]).toEqual([2, 0]);
+  });
+
+  it("reports stream resets with their reason", () => {
+    const resets: string[] = [];
+    channel = new LiveChannel(
+      "m30t-01",
+      options,
+      logger,
+      () => now,
+      undefined,
+      (reason) => resets.push(reason),
+    );
+    goLive("old");
+    channel.videoTag("old", sequenceHeader(7, 4000));
+    channel.publish("new");
+    expect(resets).toEqual(["camera", "publisher"]);
   });
 
   it("does not count the start snapshot as congestion, so a late joiner keeps its frames", () => {

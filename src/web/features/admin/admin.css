@@ -1,0 +1,230 @@
+/* Admin page (`/admin`): cards per device, large buttons for tablets. */
+
+.admin-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+}
+
+.admin-header h1 {
+  font-size: var(--text-xl);
+  font-weight: 800;
+}
+
+.admin-header-actions,
+.admin-client-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.admin-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.admin-section h2 {
+  font-size: var(--text-lg);
+}
+
+.admin-clients {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-client {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--live);
+  border-radius: var(--radius-md);
+  background: var(--strip);
+}
+
+.admin-client[data-state="offline"] {
+  border-left-color: var(--slot-idle);
+}
+
+.admin-client[data-state="paused"] {
+  border-left-color: var(--nosignal);
+}
+
+.admin-client p {
+  margin: 0;
+}
+
+.admin-client-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.admin-client-head h3 {
+  font-size: var(--text-md);
+  overflow-wrap: anywhere;
+}
+
+.admin-client-state {
+  flex: none;
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.admin-client[data-state="online"] .admin-client-state {
+  color: var(--live-text);
+}
+
+.admin-client[data-state="paused"] .admin-client-state {
+  color: var(--nosignal-text);
+}
+
+.admin-client[data-state="offline"] .admin-client-state {
+  color: var(--quiet);
+}
+
+.admin-client-meta,
+.admin-client-quality {
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-client-quality[data-issues] {
+  color: var(--nosignal-text);
+  font-weight: 700;
+}
+
+.admin-client-actions {
+  margin-top: var(--space-1);
+}
+
+.admin-primary {
+  border-color: var(--accent-fill);
+  background: var(--accent-fill);
+  color: var(--on-accent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .admin-primary:hover:not(:disabled) {
+    background: var(--accent-fill-hover);
+  }
+}
+
+.admin-pause {
+  border-color: var(--nosignal);
+}
+
+.admin-error {
+  color: var(--fault-text);
+  font-weight: 700;
+}
+
+.admin-load {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  align-items: start;
+  gap: var(--space-3) var(--space-6);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-table caption {
+  margin-bottom: var(--space-1);
+  color: var(--quiet);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-align: left;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: var(--space-2) var(--space-2) var(--space-2) 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.admin-table th {
+  font-weight: 600;
+}
+
+.admin-events {
+  max-height: 60vh;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  font-size: var(--text-sm);
+  list-style: none;
+}
+
+.admin-events li {
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-events li[data-kind="drone-offline"],
+.admin-events li[data-kind="publish-rejected"],
+.admin-events li[data-kind="client-paused"] {
+  color: var(--nosignal-text);
+}
+
+.admin-events time {
+  margin-right: var(--space-3);
+  color: var(--quiet);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-login,
+.admin-rename {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.admin-login {
+  width: min(100%, 360px);
+  margin: var(--space-6) auto;
+}
+
+.admin-login p,
+.admin-rename p {
+  margin: 0;
+}
+
+.admin-login label,
+.admin-rename label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-weight: 600;
+}
+
+.admin-login input,
+.admin-rename input {
+  min-height: var(--touch);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--ground);
+  color: var(--text);
+  font: inherit;
+}
+
+.admin-login input {
+  font-size: var(--text-xl);
+  letter-spacing: 0.3em;
+  text-align: center;
+}

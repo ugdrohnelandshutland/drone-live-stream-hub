@@ -18,6 +18,8 @@ WORKDIR /app
 COPY --from=build /app/dist/bundle/ ./
 COPY config/drones.example.json config/drones.example.json
 COPY config/drones.example.json config/drones.json
+# Device names from the admin page (ADR 0012); mount a volume here to keep them.
+RUN mkdir data && chown node:node data
 ENV NODE_ENV=production
 USER node
 EXPOSE 8080 1935

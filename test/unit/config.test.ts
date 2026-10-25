@@ -2,7 +2,13 @@ import { mkdtemp, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { ConfigError, loadConfig, parseConfig, resolveConfigPath } from "../../src/server/config.js";
+import {
+  ConfigError,
+  loadConfig,
+  parseConfig,
+  resolveConfigPath,
+  resolveDataDir,
+} from "../../src/server/config.js";
 
 const valid = {
   rtmpPort: 1935,
@@ -16,6 +22,14 @@ const valid = {
 describe("parseConfig", () => {
   it("accepts a valid config", () => {
     expect(parseConfig(valid)).toEqual(valid);
+  });
+
+  it("accepts an admin PIN of 4 to 12 digits as a string, leading zeros included", () => {
+    expect(parseConfig({ ...valid, adminPin: "0042" }).adminPin).toBe("0042");
+    expect(parseConfig(valid).adminPin).toBeUndefined();
+    for (const adminPin of ["123", "1234567890123", "12a4", 1234]) {
+      expect(() => parseConfig({ ...valid, adminPin })).toThrow(/adminPin/);
+    }
   });
 
   it("applies default ports", () => {
@@ -85,5 +99,20 @@ describe("loadConfig", () => {
   it("loads the shipped example", async () => {
     const config = await loadConfig(path.join("config", "drones.example.json"));
     expect(config.drones.length).toBeGreaterThan(0);
+  });
+});
+
+describe("resolveDataDir", () => {
+  const configPath = path.resolve("install", "config", "drones.json");
+
+  it("defaults to data next to the config folder", () => {
+    expect(resolveDataDir([], {}, configPath)).toBe(path.resolve("install", "data"));
+  });
+
+  it("prefers --data-dir, then the environment", () => {
+    expect(resolveDataDir(["--data-dir", "x"], { DLSH_DATA_DIR: "y" }, configPath)).toBe(path.resolve("x"));
+    expect(resolveDataDir(["--data-dir=z"], {}, configPath)).toBe(path.resolve("z"));
+    expect(resolveDataDir([], { DLSH_DATA_DIR: "y" }, configPath)).toBe(path.resolve("y"));
+    expect(() => resolveDataDir(["--data-dir"], {}, configPath)).toThrow(ConfigError);
   });
 });

@@ -19,6 +19,7 @@ npm run dev                   # Dienst (Watch-Modus) + Web-UI-Dev-Server auf :51
 npm run sim -- --drones 3     # drei simulierte Drohnen senden RTMP an den Dienst
 # Übersicht:     http://localhost:5173/
 # Diagnose:      http://localhost:5173/diagnose  (was jede RC sendet; für Hardwaretests)
+# Verwaltung:    http://localhost:5173/admin     (Geräte anhalten/freigeben; "adminPin" in drones.json)
 # Einzelansicht: http://localhost:5173/drone/m30t-01   (?stats Latenzwerte, ?kiosk für den Touchscreen)
 npm run measure:latency       # Glass-to-Glass-Latenz in echtem Chrome, Bericht in sim/reports/
 npm test                      # Unit- und Integrationstests (ffmpeg-Tests werden ohne ffmpeg übersprungen)

@@ -1,6 +1,6 @@
 import { createService } from "./app.js";
 import { loadBuildInfo } from "./build-info.js";
-import { ConfigError, loadConfig, resolveConfigPath } from "./config.js";
+import { ConfigError, loadConfig, resolveConfigPath, resolveDataDir } from "./config.js";
 import { createLogger } from "./logger.js";
 
 /**
@@ -23,19 +23,27 @@ async function main(): Promise<void> {
   }
   const configPath = resolveConfigPath(argv, process.env);
   const config = await loadConfig(configPath);
+  const dataDir = resolveDataDir(argv, process.env, configPath);
 
   if (argv.includes("--check-config")) {
     console.log(
       `Configuration OK: ${configPath}\n` +
         `  RTMP port ${config.rtmpPort}, HTTP port ${config.httpPort}\n` +
-        `  Drones: ${config.drones.map((d) => `${d.id} (${d.name})`).join(", ")}`,
+        `  Drones: ${config.drones.map((d) => `${d.id} (${d.name})`).join(", ")}\n` +
+        `  Admin page: ${config.adminPin !== undefined ? "on (adminPin set)" : "off (no adminPin)"}`,
     );
     return;
   }
 
   const logger = createLogger({ name: "drone-live-stream-hub" });
   logger.info(
-    { configPath, drones: config.drones.map((d) => d.id), pid: process.pid },
+    {
+      configPath,
+      dataDir,
+      drones: config.drones.map((d) => d.id),
+      admin: config.adminPin !== undefined,
+      pid: process.pid,
+    },
     "configuration loaded",
   );
   if (Number(process.versions.node.split(".")[0]) !== TESTED_NODE_MAJOR) {
@@ -49,7 +57,7 @@ async function main(): Promise<void> {
   // `--host 127.0.0.1` binds to loopback only (testing); default: all interfaces.
   const hostIndex = argv.indexOf("--host");
   const host = hostIndex >= 0 ? argv[hostIndex + 1] : undefined;
-  const service = createService(config, logger, { info, ...(host !== undefined ? { host } : {}) });
+  const service = createService(config, logger, { info, dataDir, ...(host !== undefined ? { host } : {}) });
   await service.start();
 
   let stopping = false;

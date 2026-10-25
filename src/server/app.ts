@@ -1,9 +1,15 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { ServiceInfo } from "../shared/api.js";
+import type { AdminLoad } from "../shared/admin.js";
+import type { DroneState, ServiceInfo } from "../shared/api.js";
 import type { DiagnosticsResponse } from "../shared/diagnostics.js";
+import { AdminApi } from "./admin/admin-api.js";
+import { AdminAuth } from "./admin/admin-auth.js";
+import { EventLog } from "./admin/event-log.js";
 import { loadBuildInfo } from "./build-info.js";
+import { FileClientNames, MemoryClientNames } from "./clients/client-names.js";
+import { ClientRegistry } from "./clients/client-registry.js";
 import type { AppConfig } from "./config.js";
 import { Api } from "./delivery/api.js";
 import { DeliveryServer } from "./delivery/http-server.js";
@@ -29,6 +35,8 @@ export interface ServiceOptions {
   info?: ServiceInfo;
   /** Periodic per-stream stats in the log (fps, kbit/s, keyframe interval); 0 disables the log line. */
   probeIntervalMs?: number;
+  /** Device names are kept in `<dataDir>/clients.json`; without it, in memory only. */
+  dataDir?: string;
 }
 
 export const RTMP_APP_NAME = "live";
@@ -50,6 +58,7 @@ export interface Service {
   readonly httpPort: number;
   readonly hub: LiveHub;
   readonly registry: DroneRegistry;
+  readonly clients: ClientRegistry;
   start(): Promise<void>;
   stop(): Promise<void>;
 }
@@ -70,6 +79,24 @@ export function createService(config: AppConfig, logger: Logger, options: Servic
   const registry = new DroneRegistry(config.drones, logger.child({ module: "registry" }));
   registry.attach(ingest);
 
+  // Admin page (ADR 0012): devices, pausing, event log.
+  const events = new EventLog();
+  const names = options.dataDir
+    ? new FileClientNames(options.dataDir, logger.child({ module: "clients" }))
+    : new MemoryClientNames();
+  const clients = new ClientRegistry({ names, onEvent: (event) => events.add(event) });
+  const droneStates = new Map<string, DroneState>();
+  registry.on("drone-updated", (status) => {
+    const before = droneStates.get(status.id) ?? "offline";
+    droneStates.set(status.id, status.state);
+    if (status.state !== before) {
+      events.add({ kind: status.state === "live" ? "drone-live" : "drone-offline", droneId: status.id });
+    }
+  });
+  registry.on("publish-rejected", ({ streamKey, remoteAddress }) =>
+    events.add({ kind: "publish-rejected", detail: streamKey, address: remoteAddress }),
+  );
+
   const hub = new LiveHub(
     config.drones.map((d) => d.id),
     ingest,
@@ -81,6 +108,7 @@ export function createService(config: AppConfig, logger: Logger, options: Servic
     },
     logger.child({ module: "delivery" }),
     (droneId, count) => registry.setViewerCount(droneId, count),
+    (droneId, reason) => events.add({ kind: "stream-reset", droneId, detail: reason }),
   );
   // Observes accepted publishers (registered after the registry) for GET /api/diagnostics
   // and the per-stream log lines.
@@ -125,7 +153,54 @@ export function createService(config: AppConfig, logger: Logger, options: Servic
     registry,
     info,
     diagnostics: diagnosticsReport,
+    clients,
     logger: logger.child({ module: "api" }),
+  });
+
+  let cpuSample = { at: process.hrtime.bigint(), usage: process.cpuUsage(), percent: null as number | null };
+  const cpuPercent = (): number | null => {
+    const at = process.hrtime.bigint();
+    const elapsedUs = Number(at - cpuSample.at) / 1000;
+    // Polled every second by the page; shorter intervals give noisy values, reuse the last one.
+    if (elapsedUs < 900_000) return cpuSample.percent;
+    const used = process.cpuUsage(cpuSample.usage);
+    cpuSample = {
+      at,
+      usage: process.cpuUsage(),
+      percent: Math.round(((used.user + used.system) / elapsedUs) * 100),
+    };
+    return cpuSample.percent;
+  };
+  const adminLoad = (): AdminLoad => {
+    const memory = process.memoryUsage();
+    const delivery = hub.stats();
+    const drones = registry.list().map((drone) => ({
+      id: drone.id,
+      name: drone.name,
+      live: drone.state === "live",
+      inKbps: drone.state === "live" ? (diagnostics.snapshot(drone.id)?.measurements?.kbps ?? null) : null,
+      viewers: delivery[drone.id]?.viewers ?? 0,
+    }));
+    return {
+      drones,
+      outKbps: clients.outKbps(),
+      viewers: drones.reduce((sum, d) => sum + d.viewers, 0),
+      devices: clients.onlineCount,
+      service: {
+        version: info.version,
+        uptimeSec: Math.round((Date.now() - startedAt) / 1000),
+        rssBytes: memory.rss,
+        heapUsedBytes: memory.heapUsed,
+        cpuPercent: cpuPercent(),
+      },
+    };
+  };
+  const admin = new AdminApi({
+    auth: config.adminPin !== undefined ? new AdminAuth({ pin: config.adminPin }) : undefined,
+    clients,
+    events,
+    load: adminLoad,
+    logger: logger.child({ module: "admin" }),
   });
 
   const delivery: DeliveryServer = new DeliveryServer({
@@ -134,6 +209,8 @@ export function createService(config: AppConfig, logger: Logger, options: Servic
     staticDir: options.staticDir ?? defaultStaticDir(),
     hub,
     api,
+    admin,
+    clients,
     logger: logger.child({ module: "http" }),
     health: (): object => {
       const memory = process.memoryUsage();
@@ -161,7 +238,9 @@ export function createService(config: AppConfig, logger: Logger, options: Servic
     },
     hub,
     registry,
+    clients,
     async start() {
+      if (names instanceof FileClientNames) await names.load();
       await ingest.start();
       await delivery.start();
       diagnostics.start();
@@ -170,6 +249,8 @@ export function createService(config: AppConfig, logger: Logger, options: Servic
       diagnostics.stop();
       await ingest.stop();
       await delivery.stop();
+      clients.stop();
+      if (names instanceof FileClientNames) await names.flush();
     },
   };
 }

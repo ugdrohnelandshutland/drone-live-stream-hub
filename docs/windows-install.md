@@ -39,8 +39,8 @@ Das Skript
   Netzwerke**,
 - startet den Dienst und prüft, ob er antwortet.
 
-Ein erneuter Aufruf mit einem neueren Paket aktualisiert das Programm. `config\drones.json`
-und die Logs bleiben erhalten.
+Ein erneuter Aufruf mit einem neueren Paket aktualisiert das Programm. `config\drones.json`,
+die Gerätenamen in `data\` und die Logs bleiben erhalten.
 
 ## Drohnen konfigurieren
 
@@ -61,6 +61,8 @@ Editor über „Als Administrator ausführen“ öffnen):
 - `id`: Kleinbuchstaben, Ziffern und `-` (max. 32 Zeichen). Sie ist der Stream-Key auf der
   RC Plus und Teil der Kiosk-URL `/drone/<id>`.
 - `name`: wird in der Weboberfläche angezeigt.
+- `adminPin` (optional): schaltet die Verwaltung ein (siehe unten), z. B.
+  `"adminPin": "4711"` – 4 bis 12 Ziffern, **in Anführungszeichen**.
 
 Danach den Dienst neu starten (Administrator-PowerShell): `Restart-Service DroneLiveStreamHub`.
 Wurde ein **Port** geändert, `install.cmd` erneut ausführen, damit die Firewall-Regeln passen.
@@ -101,6 +103,29 @@ Set-NetConnectionProfile -InterfaceAlias "WLAN" -NetworkCategory Private
 - Nach einem Absturz startet sich der Dienst selbst neu. Nach einem **Konfigurationsfehler**
   hält er stattdessen an; der Grund steht am Ende von `service_rCURRENT.log`.
 
+## Verwaltung
+
+`http://<IP des Einsatz-PCs>:8080/admin` (in der Oberfläche nicht verlinkt), nur wenn in
+`drones.json` eine `adminPin` steht; die Anmeldung gilt bis zum nächsten Neustart des Dienstes.
+Nach fünf falschen PINs ist das Gerät für eine Minute gesperrt.
+
+- **Geräte:** jedes Gerät, das die Seite geöffnet hat, mit Name, Browser, IP, den gerade
+  geöffneten Drohnen und der Verbindungsqualität der letzten 10 Minuten (Datenrate,
+  ausgelassene Bilder, Abbrüche). Getrennte Geräte bleiben 10 Minuten in der Liste.
+- **Anhalten / Freigeben:** Das Gerät zeigt „Übertragung angehalten“ statt des Bildes, auch
+  nach dem Neuladen der Seite; die Drohne sendet weiter, alle anderen Geräte sehen das Bild wie
+  bisher. Nach „Freigeben“ ist das Bild sofort wieder da. Nach einem Neustart des Dienstes sind
+  alle Geräte freigegeben.
+- **Neu laden:** lädt die Seite auf dem Gerät neu, z. B. einen hängenden Kiosk-Bildschirm.
+- **Umbenennen:** z. B. „ELW Großbildschirm“. Die Namen stehen in `data\clients.json` und
+  bleiben auch bei neuer IP erhalten.
+- **Auslastung** (Eingang je Drohne, Ausgang an alle Geräte, CPU, Speicher) und die
+  **Ereignisse** seit dem Start des Dienstes.
+
+Ein Gerät wird über ein Cookie im Browser erkannt. Wer die Browserdaten löscht oder ein
+privates Fenster öffnet, erscheint als neues Gerät. Die PIN wird unverschlüsselt übertragen:
+Sie schützt vor Versehen und Neugierigen im Einsatz-WLAN, nicht vor gezielten Angriffen.
+
 ## Diagnose (Tests mit einer echten RC)
 
 `http://<IP des Einsatz-PCs>:8080/diagnose` (in der Oberfläche nicht verlinkt) zeigt je Drohne,
@@ -113,5 +138,5 @@ Daten: `GET /api/diagnostics`.
 
 ## Deinstallieren
 
-Im Installationsordner **`uninstall.cmd`** doppelklicken. Konfiguration und Logs bleiben
+Im Installationsordner **`uninstall.cmd`** doppelklicken. Konfiguration, Gerätenamen und Logs bleiben
 erhalten; `uninstall-windows.ps1 -Purge` löscht auch diese.

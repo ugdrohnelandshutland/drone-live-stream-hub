@@ -19,7 +19,12 @@ describe("drones store", () => {
     const store = createDronesStore();
     const onChange = vi.fn();
     store.subscribe(onChange);
-    expect(store.getSnapshot()).toEqual({ drones: undefined, connection: "connecting", lostAt: new Map() });
+    expect(store.getSnapshot()).toEqual({
+      drones: undefined,
+      connection: "connecting",
+      lostAt: new Map(),
+      paused: false,
+    });
 
     FakeEventSource.latest().snapshot([drone("a", "offline"), drone("b", "live")]);
     FakeEventSource.latest().updated(drone("a", "live"));
@@ -94,5 +99,32 @@ describe("drones store", () => {
     expect(FakeEventSource.instances).toHaveLength(2);
     FakeEventSource.latest().snapshot([drone("a", "offline")]);
     expect(store.getSnapshot()).toMatchObject({ connection: "open", drones: [{ state: "offline" }] });
+  });
+});
+
+describe("drones store, admin events (ADR 0012)", () => {
+  it("follows pause and release, and a new snapshot clears a stale pause", () => {
+    const store = createDronesStore();
+    store.subscribe(() => undefined);
+    const source = FakeEventSource.latest();
+    source.snapshot([drone("a", "live")]);
+    expect(store.getSnapshot().paused).toBe(false);
+
+    source.emit("client-paused", {});
+    expect(store.getSnapshot().paused).toBe(true);
+    source.emit("client-resumed", {});
+    expect(store.getSnapshot().paused).toBe(false);
+
+    source.emit("client-paused", {});
+    source.snapshot([drone("a", "live")]); // service restarted: pauses are gone
+    expect(store.getSnapshot().paused).toBe(false);
+  });
+
+  it("reloads on request", () => {
+    const onReload = vi.fn();
+    const store = createDronesStore({ onReload });
+    store.subscribe(() => undefined);
+    FakeEventSource.latest().emit("client-reload", {});
+    expect(onReload).toHaveBeenCalledTimes(1);
   });
 });

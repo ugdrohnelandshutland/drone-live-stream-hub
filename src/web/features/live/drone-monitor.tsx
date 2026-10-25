@@ -20,6 +20,7 @@ import {
   describeStatus,
   LIVE_WITHOUT_PREVIEW,
   offlineView,
+  pausedView,
   type StatusView,
 } from "../../player/player-status";
 import { useSettledStatus } from "../../player/use-settled-status";
@@ -40,6 +41,8 @@ interface DroneMonitorProps {
   focused: boolean;
   /** "Datensparen": as a tile, play only keyframes (ADR 0009). */
   dataSaver: boolean;
+  /** An admin paused this device (ADR 0012): no player, a notice instead of the picture. */
+  paused: boolean;
   options: PageOptions;
 }
 
@@ -50,7 +53,7 @@ interface DroneMonitorProps {
  * picture keeps running without a reconnect. With "Datensparen" the stream itself changes
  * (keyframes as a tile, full when focused), so the player is rebuilt on the same element.
  */
-export function DroneMonitor({ drone, slot, focused, dataSaver, options }: DroneMonitorProps) {
+export function DroneMonitor({ drone, slot, focused, dataSaver, paused, options }: DroneMonitorProps) {
   const rootRef = useRef<HTMLLIElement>(null);
   const [video, setVideo] = useState<HTMLVideoElement | null>(null);
   const [playerStatus, setPlayerStatus] = useState<PlayerStatus>("connecting");
@@ -66,9 +69,11 @@ export function DroneMonitor({ drone, slot, focused, dataSaver, options }: Drone
 
   // Focused: always connected — the server holds the socket until the drone is up, so the
   // picture appears the moment it is. Tiles connect only while the drone is live.
-  const runPlayer = focused || (live && options.previews);
+  const runPlayer = !paused && (focused || (live && options.previews));
   const mode = !focused && dataSaver ? "keyframes" : "full";
-  const view = monitorView({ live, focused, previews: options.previews, status, droneId: drone.id });
+  const view = paused
+    ? pausedView()
+    : monitorView({ live, focused, previews: options.previews, status, droneId: drone.id });
 
   return (
     <li

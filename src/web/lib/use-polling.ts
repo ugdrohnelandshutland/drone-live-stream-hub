@@ -14,6 +14,8 @@ export function usePolling<T>(
   fetcher: (signal: AbortSignal) => Promise<T>,
   intervalMs: number,
   enabled: boolean,
+  /** A new value starts over with an immediate request (e.g. after an action). */
+  restartKey?: unknown,
 ): Polled<T> {
   const [state, setState] = useState<Polled<T>>({ data: undefined, failed: false });
   const fetchNow = useEffectEvent(fetcher);
@@ -41,7 +43,7 @@ export function usePolling<T>(
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [intervalMs, enabled]);
+  }, [intervalMs, enabled, restartKey]);
 
   return state;
 }

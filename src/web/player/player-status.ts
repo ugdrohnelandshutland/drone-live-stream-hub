@@ -58,6 +58,8 @@ export function describeStatus(status: PlayerStatus, droneId: string): StatusVie
         overlay: { title: "Unbekannte Drohne", detail: `„${droneId}“ ist nicht eingerichtet.` },
         immediate: true,
       };
+    case "paused":
+      return pausedView();
     case "unsupported":
       return {
         tone: "fault",
@@ -87,3 +89,13 @@ export const LIVE_WITHOUT_PREVIEW: StatusView = {
   overlay: { title: t.overview.previewsOff, detail: "" },
   immediate: true,
 };
+
+/** An admin paused this device (ADR 0012): no picture until released, also without a player. */
+export function pausedView(): StatusView {
+  return {
+    tone: "idle",
+    label: t.paused.label,
+    overlay: { title: t.paused.title, detail: "" },
+    immediate: true,
+  };
+}

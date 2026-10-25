@@ -7,6 +7,9 @@ import {
   type ServiceInfo,
 } from "../../shared/api.js";
 import type { DiagnosticsResponse } from "../../shared/diagnostics.js";
+import { clientCookie } from "../clients/client-cookie.js";
+import type { ClientRegistry } from "../clients/client-registry.js";
+import { displayAddress } from "../clients/user-agent.js";
 import type { Logger } from "../logger.js";
 import type { DroneRegistry } from "../registry/registry.js";
 
@@ -16,6 +19,8 @@ export interface ApiOptions {
   info: ServiceInfo;
   /** GET /api/diagnostics: what each publisher sends (see src/shared/diagnostics.ts). */
   diagnostics?: () => DiagnosticsResponse;
+  /** Devices (ADR 0012): each SSE connection tells the registry the device is there. */
+  clients?: ClientRegistry;
   logger: Logger;
   /** Updates per drone within this window are merged into one event (viewer count bursts). */
   coalesceMs?: number;
@@ -89,6 +94,9 @@ export class Api {
   }
 
   private openStream(req: IncomingMessage, res: ServerResponse): void {
+    // The page's first request normally set the cookie already; not with the Vite dev server.
+    const { clientId, setCookie } = clientCookie(req);
+    if (setCookie) res.setHeader("set-cookie", setCookie);
     res.writeHead(200, {
       "content-type": "text/event-stream; charset=utf-8",
       "cache-control": "no-cache, no-transform",
@@ -100,7 +108,18 @@ export class Api {
     res.write(`retry: 2000\n\n${sseEvent(SSE_SNAPSHOT, snapshot)}`);
     this.clients.add(res);
     this.options.logger.debug({ clients: this.clients.size }, "SSE client connected");
-    const remove = () => this.clients.delete(res);
+    const leave = this.options.clients?.openEvents({
+      clientId,
+      address: displayAddress(req.socket.remoteAddress),
+      userAgent: req.headers["user-agent"],
+      send: (event, data) => {
+        if (!res.destroyed) res.write(sseEvent(event, data));
+      },
+    });
+    const remove = () => {
+      this.clients.delete(res);
+      leave?.();
+    };
     req.on("close", remove);
     res.on("error", remove);
   }

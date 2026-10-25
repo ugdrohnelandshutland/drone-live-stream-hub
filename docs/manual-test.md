@@ -79,6 +79,24 @@ Press `s` (3 s stall), `c` (cut) and `h` (heal) in the proxy terminal.
 - [ ] Stall: picture freezes, "Kein Signal" after ~2 s, continues by itself
 - [ ] Cut: "Verbindung gestört", picture back after heal
 
+## Admin page `/admin` (ADR 0012)
+
+With `"adminPin": "4711"` in `config/drones.json`; a tablet and the kiosk watch the overview.
+
+- [ ] Without `adminPin`: the page says how to switch it on
+- [ ] Wrong PIN: "PIN falsch."; five wrong ones: locked for a minute; right PIN: devices shown
+- [ ] Every watching device is listed once (not once per tile) with browser, IP and the drones
+      it shows; "Datensparen" tiles are marked
+- [ ] "Anhalten": the device shows "Übertragung angehalten" on every tile within a second, the
+      banner explains it; reloading the page keeps it paused; other devices keep playing
+- [ ] "Freigeben": the picture is back within about a second, without reloading
+- [ ] "Neu laden": the device reloads (kiosk too)
+- [ ] "Umbenennen": the name appears; it survives a service restart; the device keeps its name
+      after a reload and after the Wi-Fi gave it a new IP
+- [ ] Weak tablet connection (`npm run sim:proxy`): its card shows left-out frames or aborts
+- [ ] Event log: drone live/offline, camera switch, devices connected/paused/released
+- [ ] **iPad:** the device keeps its identity after closing Chrome and a day later (cookie)
+
 ## Windows field PC (package)
 
 Once per release, on a Windows 10/11 PC, with the ZIP from `npm run package:windows`
@@ -99,7 +117,9 @@ Once per release, on a Windows 10/11 PC, with the ZIP from `npm run package:wind
 - [ ] Break `config\drones.json` (e.g. remove a quote), restart the service: it stops, the log
       ends with the config error, no restart loop. Fix the file, start again.
 - [ ] Reboot the PC: the service runs without anyone logging in.
-- [ ] Run `install.cmd` again (update): `drones.json` and the logs are kept.
+- [ ] Run `install.cmd` again (update): `drones.json`, `data\clients.json` and the logs are kept.
+- [ ] With `adminPin` set: name a device on `/admin`, restart the service: the name is still there
+      (the service account can write `data\`).
 - [ ] `uninstall.cmd`: service and firewall rules are gone, config and logs are kept.
 
 ## First test with a real RC Plus (milestone 7)

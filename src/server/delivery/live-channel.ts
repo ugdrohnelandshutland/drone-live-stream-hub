@@ -11,7 +11,12 @@ export interface ViewerConnection {
   readonly bufferedAmount: number;
   send(data: Buffer): void;
   close(code: number, reason: string): void;
+  /** A frame was not sent because the viewer is congested (connection quality, ADR 0012). */
+  noteDropped?(): void;
 }
+
+/** Why viewers were reset with 4001. */
+export type StreamResetReason = "camera" | "publisher";
 
 export interface LiveChannelOptions {
   maxGopBytes: number;
@@ -87,6 +92,7 @@ export class LiveChannel {
     private readonly logger: Logger,
     private readonly now: () => number = Date.now,
     private readonly onViewerCount: (count: number) => void = () => undefined,
+    private readonly onStreamReset: (reason: StreamResetReason) => void = () => undefined,
   ) {
     this.cache = new GopCache({ maxGopBytes: options.maxGopBytes });
   }
@@ -133,6 +139,7 @@ export class LiveChannel {
         "publisher replaced",
       );
       this.closeStreaming(CloseCode.StreamReset);
+      this.onStreamReset("publisher");
     }
     this.cache.clear();
     this.gopIndex = -1;
@@ -164,6 +171,7 @@ export class LiveChannel {
             "sequence header changed, resetting viewers",
           );
           this.closeStreaming(CloseCode.StreamReset);
+          this.onStreamReset("camera");
         }
         return;
       case "keyframe":
@@ -263,8 +271,7 @@ export class LiveChannel {
       }
       if (!essential) {
         viewer.skipUntilKeyframe = true;
-        viewer.droppedTags++;
-        this.droppedTags++;
+        this.countDropped(viewer);
         return;
       }
     } else {
@@ -272,13 +279,18 @@ export class LiveChannel {
     }
     if (viewer.skipUntilKeyframe && !essential) {
       if (!keyframe) {
-        viewer.droppedTags++;
-        this.droppedTags++;
+        this.countDropped(viewer);
         return;
       }
       viewer.skipUntilKeyframe = false;
     }
     viewer.conn.send(data);
+  }
+
+  private countDropped(viewer: Viewer): void {
+    viewer.droppedTags++;
+    this.droppedTags++;
+    viewer.conn.noteDropped?.();
   }
 
   private closeSlow(viewer: Viewer, buffered: number): void {

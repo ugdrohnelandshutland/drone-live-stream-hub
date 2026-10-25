@@ -209,6 +209,30 @@ describe("overview", () => {
   });
 });
 
+describe("paused by an admin (ADR 0012)", () => {
+  it("stops every player, says why, and starts again on release", () => {
+    renderApp("/", "?datensparen=0");
+    act(() => sse().snapshot([drone("m30t-01", "live"), drone("m30t-02", "live")]));
+    expect(FakePlayer.running()).toHaveLength(2);
+
+    act(() => sse().emit("client-paused", {}));
+    expect(FakePlayer.running()).toHaveLength(0);
+    expect(screen.getAllByText("Übertragung angehalten")).toHaveLength(2);
+    expect(screen.getByRole("status").textContent).toMatch(/für dieses Gerät angehalten/);
+
+    act(() => sse().emit("client-resumed", {}));
+    expect(FakePlayer.running()).toHaveLength(2);
+    expect(screen.queryByText("Übertragung angehalten")).toBeNull();
+  });
+
+  it("shows the notice when the player hears 4003 first", () => {
+    renderApp("/drone/m30t-01");
+    act(() => sse().snapshot([drone("m30t-01", "live")]));
+    act(() => FakePlayer.only().emit("paused"));
+    expect(screen.getByText("Übertragung angehalten")).toBeTruthy();
+  });
+});
+
 describe("overview filter 'Nur live'", () => {
   const slots = () =>
     screen.queryAllByRole("listitem").map((tile) => within(tile).getByText(/^\d$/).textContent);

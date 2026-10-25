@@ -1,6 +1,11 @@
 import type { IngestAdapter } from "../ingest/types.js";
 import type { Logger } from "../logger.js";
-import { LiveChannel, type ChannelStats, type LiveChannelOptions } from "./live-channel.js";
+import {
+  LiveChannel,
+  type ChannelStats,
+  type LiveChannelOptions,
+  type StreamResetReason,
+} from "./live-channel.js";
 
 /**
  * Owns one LiveChannel per configured drone and routes ingest sessions to them.
@@ -17,10 +22,16 @@ export class LiveHub {
     options: LiveChannelOptions,
     private readonly logger: Logger,
     onViewerCount: (droneId: string, count: number) => void = () => undefined,
+    onStreamReset: (droneId: string, reason: StreamResetReason) => void = () => undefined,
   ) {
     for (const id of droneIds) {
-      const channel = new LiveChannel(id, options, logger.child({ droneId: id }), Date.now, (count) =>
-        onViewerCount(id, count),
+      const channel = new LiveChannel(
+        id,
+        options,
+        logger.child({ droneId: id }),
+        Date.now,
+        (count) => onViewerCount(id, count),
+        (reason) => onStreamReset(id, reason),
       );
       this.channels.set(id, channel);
     }

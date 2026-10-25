@@ -2,7 +2,15 @@
  * Live drone list from /api/events (SSE), shared by every component of a page. Framework-free:
  * React reads it through useSyncExternalStore (use-drones.ts).
  */
-import { SSE_DRONE_UPDATED, SSE_SNAPSHOT, type DroneStatus, type DronesResponse } from "../../shared/api";
+import {
+  SSE_CLIENT_PAUSED,
+  SSE_CLIENT_RELOAD,
+  SSE_CLIENT_RESUMED,
+  SSE_DRONE_UPDATED,
+  SSE_SNAPSHOT,
+  type DroneStatus,
+  type DronesResponse,
+} from "../../shared/api";
 import { openEventSource } from "./http";
 
 export type Connection = "connecting" | "open" | "reconnecting";
@@ -17,6 +25,8 @@ export interface DronesSnapshot {
    * not matter. Drones that were already offline when the page opened have no entry.
    */
   lostAt: ReadonlyMap<string, number>;
+  /** An admin paused this device (ADR 0012): run no players until released. */
+  paused: boolean;
 }
 
 export interface DronesStore {
@@ -41,8 +51,22 @@ const isDrone = (v: unknown): boolean =>
 const isDronesResponse = (v: unknown): boolean =>
   typeof v === "object" && v !== null && Array.isArray((v as DronesResponse).drones);
 
-export function createDronesStore(path = "/api/events"): DronesStore {
-  let snapshot: DronesSnapshot = { drones: undefined, connection: "connecting", lostAt: new Map() };
+export interface DronesStoreOptions {
+  path?: string;
+  /** An admin asked this device to reload (stuck kiosk screen). */
+  onReload?: () => void;
+}
+
+export function createDronesStore({
+  path = "/api/events",
+  onReload = () => location.reload(),
+}: DronesStoreOptions = {}): DronesStore {
+  let snapshot: DronesSnapshot = {
+    drones: undefined,
+    connection: "connecting",
+    lostAt: new Map(),
+    paused: false,
+  };
   const listeners = new Set<() => void>();
   let source: EventSource | undefined;
   let retryTimer: number | undefined;
@@ -73,8 +97,12 @@ export function createDronesStore(path = "/api/events"): DronesStore {
       const body = parse<DronesResponse>((event as MessageEvent).data, isDronesResponse);
       if (!body) return;
       retryMs = RETRY_MIN_MS;
-      setDrones(body.drones, { connection: "open" });
+      // A pause is repeated right after the snapshot; after a service restart there is none.
+      setDrones(body.drones, { connection: "open", paused: false });
     });
+    es.addEventListener(SSE_CLIENT_PAUSED, () => set({ paused: true }));
+    es.addEventListener(SSE_CLIENT_RESUMED, () => set({ paused: false }));
+    es.addEventListener(SSE_CLIENT_RELOAD, () => onReload());
     es.addEventListener(SSE_DRONE_UPDATED, (event) => {
       const drone = parse<DroneStatus>((event as MessageEvent).data, isDrone);
       if (!drone || !snapshot.drones) return;

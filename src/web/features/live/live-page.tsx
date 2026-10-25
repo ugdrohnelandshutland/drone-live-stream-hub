@@ -38,7 +38,7 @@ interface LivePageProps {
  * stream (ADR 0009). The other monitors unmount (and stop) while one is focused.
  */
 export function LivePage({ focusId, options }: LivePageProps) {
-  const { drones, connection, lostAt } = useDrones();
+  const { drones, connection, lostAt, paused } = useDrones();
   const [liveOnly, setLiveOnly] = useLiveOnly(options.liveOnly);
   const [dataSaver, setDataSaver] = useDataSaver(options.dataSaver);
   const serverLost = useDelayedFlag(connection === "reconnecting", BANNER_DELAY_MS);
@@ -109,6 +109,7 @@ export function LivePage({ focusId, options }: LivePageProps) {
         </header>
       )}
       <Banner show={serverLost && !single}>{t.overview.serverLost}</Banner>
+      <Banner show={paused && !single && !serverLost}>{t.paused.banner}</Banner>
       <ul className="wall" style={wallStyle}>
         {monitors.map(({ drone, slot }) => (
           <DroneMonitor
@@ -117,6 +118,7 @@ export function LivePage({ focusId, options }: LivePageProps) {
             slot={slot}
             focused={single}
             dataSaver={dataSaver}
+            paused={paused}
             options={options}
           />
         ))}

@@ -5,7 +5,7 @@
 .DESCRIPTION
   Run from the unpacked release folder (or double-click install.cmd). Needs administrator
   rights and asks for them if missing. Safe to run again: an update keeps
-  config\drones.json and the logs.
+  config\drones.json, the device names in data\ and the logs.
 
   - Checks that Node.js 24 LTS is installed (not part of the package, see ADR 0008).
   - Copies the package to the install directory.
@@ -117,6 +117,8 @@ try {
   $configDir = Join-Path $InstallDir 'config'
   $configFile = Join-Path $configDir 'drones.json'
   $logDir = Join-Path $InstallDir 'logs'
+  # Written by the service at runtime: device names from the admin page (ADR 0012).
+  $dataDir = Join-Path $InstallDir 'data'
 
   # 1. Stop a running instance so its files can be replaced.
   $existing = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
@@ -126,9 +128,9 @@ try {
     $existing.WaitForStatus('Stopped', [TimeSpan]::FromSeconds(30))
   }
 
-  # 2. Copy the package. The app folder is replaced as a whole; config and logs are kept.
+  # 2. Copy the package. The app folder is replaced as a whole; config, data and logs are kept.
   Write-Step "Copying files to $InstallDir"
-  New-Item -ItemType Directory -Force -Path $InstallDir, $configDir, $logDir | Out-Null
+  New-Item -ItemType Directory -Force -Path $InstallDir, $configDir, $logDir, $dataDir | Out-Null
   $samePlace = ([IO.Path]::GetFullPath($source).TrimEnd('\') -ieq $InstallDir)
   if (-not $samePlace) {
     foreach ($dir in @('shawl', 'app')) {
@@ -168,10 +170,11 @@ try {
   if ($config.rtmpPort) { $rtmpPort = [int]$config.rtmpPort }
   if ($config.httpPort) { $httpPort = [int]$config.httpPort }
 
-  # 4. Permissions: the service account may read the program and write only the logs.
+  # 4. Permissions: the service account may read the program and write only logs and data.
   Write-Step 'Setting folder permissions for LocalService'
   & icacls.exe $InstallDir /grant "${LocalServiceSid}:(OI)(CI)RX" /T /C /Q | Out-Null
   & icacls.exe $logDir /grant "${LocalServiceSid}:(OI)(CI)M" /T /C /Q | Out-Null
+  & icacls.exe $dataDir /grant "${LocalServiceSid}:(OI)(CI)M" /T /C /Q | Out-Null
 
   # 5. Service. shawl stops node.exe with Ctrl+C, restarts it after a crash (but not after a
   #    configuration error) and writes its output to rotating log files.
@@ -180,7 +183,7 @@ try {
     " --stop-timeout 10000 --restart-delay 2000 --restart-if-not 0,$ExitConfigError" +
     " --log-dir $q$logDir$q --log-as wrapper --log-cmd-as service --log-rotate bytes=10485760 --log-retain 9" +
     " --env NODE_ENV=production" +
-    " -- $q$nodeExe$q $q$serverJs$q --config $q$configFile$q"
+    " -- $q$nodeExe$q $q$serverJs$q --config $q$configFile$q --data-dir $q$dataDir$q"
   if (-not $existing) {
     Write-Step "Registering service $ServiceName"
     New-Service -Name $ServiceName -BinaryPathName $binaryPath -DisplayName $DisplayName -StartupType Automatic `
@@ -244,6 +247,11 @@ try {
     Write-Host "  RC Plus RTMP URL:   rtmp://${ip}:$rtmpPort/live/<drone id>"
   }
   Write-Host "  Drones:             $configFile (restart the service after changes: Restart-Service $ServiceName)"
+  if (-not $config.adminPin) {
+    Write-Host "  Admin page:         off - set `"adminPin`" in $configFile to switch it on"
+  } else {
+    Write-Host "  Admin page:         http://localhost:$httpPort/admin"
+  }
   Write-Host "  Logs:               $logDir"
   Exit-Script 0
 } catch {

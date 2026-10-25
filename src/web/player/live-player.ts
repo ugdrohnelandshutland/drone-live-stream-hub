@@ -13,6 +13,7 @@ export type PlayerStatus =
   | "offline" // server reported drone-offline, reconnecting
   | "error" // network/player error, retrying with backoff
   | "unknown-drone"
+  | "paused" // an admin paused this device (ADR 0012); the page resumes on the SSE event
   | "unsupported";
 
 /** Latency knobs (seconds), overridable for field tuning. */
@@ -113,6 +114,8 @@ const KEYFRAME_CHASE: Pick<LatencyTuning, "chaseMax" | "chaseMinRemain"> = {
 const MIN_BACKOFF_MS = 500;
 const MAX_BACKOFF_MS = 10_000;
 const UNKNOWN_DRONE_RETRY_MS = 30_000;
+/** Paused: the page restarts the player on release; this only covers a lost SSE event. */
+const PAUSED_RETRY_MS = 30_000;
 
 interface LoaderEvents {
   onOpen: () => void;
@@ -298,6 +301,10 @@ export class LivePlayer {
         return;
       case CloseCode.StreamReset:
         this.restart(0);
+        return;
+      case CloseCode.Paused:
+        this.setStatus("paused");
+        this.restart(PAUSED_RETRY_MS);
         return;
       case CloseCode.UnknownDrone:
         this.setStatus("unknown-drone");

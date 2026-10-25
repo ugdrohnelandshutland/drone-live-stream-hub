@@ -29,6 +29,13 @@ export interface DronesResponse {
 /** SSE event names on GET /api/events. `snapshot` carries DronesResponse, `drone-updated` a DroneStatus. */
 export const SSE_SNAPSHOT = "snapshot";
 export const SSE_DRONE_UPDATED = "drone-updated";
+/**
+ * Sent only to the device concerned (ADR 0012): an admin paused or released its picture, or
+ * asked it to reload. `client-paused` also arrives right after connecting while paused.
+ */
+export const SSE_CLIENT_PAUSED = "client-paused";
+export const SSE_CLIENT_RESUMED = "client-resumed";
+export const SSE_CLIENT_RELOAD = "client-reload";
 
 /** GET /api/info — which release is running. */
 export interface ServiceInfo {

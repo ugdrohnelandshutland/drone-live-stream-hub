@@ -4,14 +4,14 @@
 
 .DESCRIPTION
   Needs administrator rights and asks for them if missing. Removes the service and the
-  firewall rules, then the program files. config\drones.json and the logs are kept unless
+  firewall rules, then the program files. config\drones.json, data\ and the logs are kept unless
   -Purge is given.
 
 .PARAMETER InstallDir
   Install directory. Default: C:\Program Files\DroneLiveStreamHub
 
 .PARAMETER Purge
-  Also delete the configuration and the logs (the whole install directory).
+  Also delete the configuration, the device names and the logs (the whole install directory).
 
 .PARAMETER Pause
   Wait for Enter before closing (used by uninstall.cmd).
@@ -70,8 +70,8 @@ try {
       Write-Step "Deleting $InstallDir"
       Remove-Item -Recurse -Force -Path $InstallDir
     } else {
-      Write-Step "Deleting program files in $InstallDir (keeping config and logs)"
-      Get-ChildItem -Path $InstallDir | Where-Object { $_.Name -ne 'config' -and $_.Name -ne 'logs' } |
+      Write-Step "Deleting program files in $InstallDir (keeping config, data and logs)"
+      Get-ChildItem -Path $InstallDir | Where-Object { @('config', 'data', 'logs') -notcontains $_.Name } |
         Remove-Item -Recurse -Force
     }
   }

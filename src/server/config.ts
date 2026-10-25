@@ -16,6 +16,11 @@ export const configSchema = z
     rtmpPort: portSchema.default(1935),
     httpPort: portSchema.default(8080),
     drones: z.array(droneSchema).min(1),
+    /** Enables the admin page (ADR 0012). A string, so leading zeros count. */
+    adminPin: z
+      .string()
+      .regex(/^\d{4,12}$/, "must be 4 to 12 digits, in quotes")
+      .optional(),
   })
   .strict()
   .superRefine((config, ctx) => {
@@ -37,6 +42,7 @@ export type DroneConfig = AppConfig["drones"][number];
 
 export const CONFIG_ENV_VAR = "DLSH_CONFIG";
 export const DEFAULT_CONFIG_PATH = path.join("config", "drones.json");
+export const DATA_DIR_ENV_VAR = "DLSH_DATA_DIR";
 
 export class ConfigError extends Error {
   override readonly name = "ConfigError";
@@ -59,6 +65,17 @@ export function resolveConfigPath(
     }
   }
   return path.resolve(cwd, fromArgs ?? env[CONFIG_ENV_VAR] ?? DEFAULT_CONFIG_PATH);
+}
+
+/**
+ * Where the service keeps what it writes at runtime (device names): `--data-dir <path>`, then
+ * the env var, then `data` next to the config folder (`<install dir>\data` on Windows).
+ */
+export function resolveDataDir(argv: readonly string[], env: NodeJS.ProcessEnv, configPath: string): string {
+  const index = argv.indexOf("--data-dir");
+  const fromArgs = index >= 0 ? argv[index + 1] : argv.find((a) => a.startsWith("--data-dir="))?.slice(11);
+  if (index >= 0 && fromArgs === undefined) throw new ConfigError("--data-dir requires a path");
+  return path.resolve(fromArgs ?? env[DATA_DIR_ENV_VAR] ?? path.join(path.dirname(configPath), "..", "data"));
 }
 
 /** Validates already-parsed JSON. Throws ConfigError with a readable list of problems. */

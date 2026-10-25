@@ -5,7 +5,8 @@
  */
 import type { LatencyTuning } from "./player/live-player";
 
-export type Route = { page: "overview" } | { page: "drone"; droneId: string } | { page: "diagnostics" };
+export type Route =
+  { page: "overview" } | { page: "drone"; droneId: string } | { page: "diagnostics" } | { page: "admin" };
 
 export function parseRoute(pathname: string): Route {
   const drone = /^\/drone\/([^/]+)\/?$/.exec(pathname);
@@ -18,6 +19,7 @@ export function parseRoute(pathname: string): Route {
     }
   }
   if (/^\/diagnose\/?$/.test(pathname)) return { page: "diagnostics" };
+  if (/^\/admin\/?$/.test(pathname)) return { page: "admin" };
   return { page: "overview" };
 }
 

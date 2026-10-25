@@ -1,6 +1,7 @@
 node_modules/
 dist/
 config/drones.json
+data/
 sim/reports/
 *.log
 *:Zone.Identifier
