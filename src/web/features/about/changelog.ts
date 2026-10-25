@@ -12,6 +12,13 @@ export interface Release {
 
 export const changelog: readonly Release[] = [
   {
+    version: "0.9.1",
+    date: "2026-10-25",
+    changes: [
+      "Die PIN der Verwaltung kann auch über die Umgebungsvariable DLSH_ADMIN_PIN gesetzt werden – praktisch für Docker, ohne eigene drones.json.",
+    ],
+  },
+  {
     version: "0.9.0",
     date: "2026-10-25",
     changes: [
