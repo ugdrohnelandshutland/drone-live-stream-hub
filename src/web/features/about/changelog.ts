@@ -12,6 +12,15 @@ export interface Release {
 
 export const changelog: readonly Release[] = [
   {
+    version: "0.9.0",
+    date: "2026-10-25",
+    changes: [
+      "Neue Verwaltungsseite unter /admin (mit PIN, „adminPin“ in drones.json): zeigt alle verbundenen Geräte mit den geöffneten Drohnen und der Verbindungsqualität.",
+      "Einzelne Geräte lassen sich anhalten und wieder freigeben – die Drohne sendet weiter, alle anderen Geräte sehen das Bild wie bisher. Ein angehaltenes Gerät zeigt „Übertragung angehalten“, auch nach dem Neuladen.",
+      "Geräte können benannt (z. B. „ELW Großbildschirm“) und aus der Ferne neu geladen werden. Dazu Auslastung des Dienstes und die letzten Ereignisse.",
+    ],
+  },
+  {
     version: "0.8.0",
     date: "2026-10-18",
     changes: [
