@@ -12,6 +12,15 @@ export interface Release {
 
 export const changelog: readonly Release[] = [
   {
+    version: "0.10.0-beta.1",
+    date: "2026-10-26",
+    changes: [
+      "Testversion für den nächsten Feldtest.",
+      "Diagnose: zählt Bilder mit fehlerhafter NAL-Struktur pro Drohne und warnt davor. Browser verwerfen den Rest solcher Bilder; strengere Empfänger brechen ab.",
+      "Verwaltung: Mitschnitte – speichert 30 s des Streams einer Drohne unverändert als FLV-Datei zum Herunterladen, für die Analyse der echten Fernsteuerungs-Daten.",
+    ],
+  },
+  {
     version: "0.9.1",
     date: "2026-10-25",
     changes: [
