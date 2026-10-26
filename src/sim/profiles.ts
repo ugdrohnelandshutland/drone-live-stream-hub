@@ -30,6 +30,23 @@ export const PROFILES: Record<string, StreamProfile> = {
     zoom: { width: 1280, height: 720 },
     thermal: { width: 640, height: 512 },
   },
+  /**
+   * Values measured from two real RC Plus in the first field test (2026-10-26): coded height
+   * 1088, zoom 1440×1088, thermal 1080×720, about 2 Mbit/s, a keyframe every second. Not
+   * reproduced: Pilot 2 repeats the sequence header before every keyframe (ffmpeg drops
+   * identical repeats when it pushes RTMP), and the rate of 66–73 video tags per second.
+   * Pauses of 1–4.5 s in the stream come from the `dropout` scenario action.
+   */
+  "pilot2-real": {
+    name: "pilot2-real",
+    width: 1920,
+    height: 1088,
+    fps: 30,
+    keyframeIntervalSec: 1,
+    bitrateKbps: 2000,
+    zoom: { width: 1440, height: 1088 },
+    thermal: { width: 1080, height: 720 },
+  },
   "720p30": {
     name: "720p30",
     width: 1280,

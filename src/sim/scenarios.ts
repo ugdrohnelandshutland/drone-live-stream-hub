@@ -35,6 +35,8 @@ const actionSchema = z.discriminatedUnion("action", [
   /** Publisher crashes (process killed); with `for`, it starts again afterwards. */
   z.object({ ...base, action: z.literal("drop"), for: duration.optional() }).strict(),
   z.object({ ...base, action: z.literal("switchCamera"), camera }).strict(),
+  /** The RTMP session stays open but frames are left out (timestamps jump); inline drones only. */
+  z.object({ ...base, action: z.literal("dropout"), for: duration }).strict(),
   /** A second publisher with the same key; with `for`, it stops again. */
   z.object({ ...base, action: z.literal("duplicate"), for: duration.optional() }).strict(),
   z
@@ -254,6 +256,9 @@ export class ScenarioRunner extends EventEmitter {
         return;
       case "switchCamera":
         await drone.switchCamera(action.camera);
+        return;
+      case "dropout":
+        drone.dropout(action.for);
         return;
       case "duplicate": {
         const duplicate = this.createDuplicate(drone, id);

@@ -2,6 +2,7 @@ import type { Amf0Value } from "../flv/amf0.js";
 import { avcLevelName, avcProfileName, parseAvcDecoderConfig } from "../../shared/flv/avc.js";
 import { isMetadataObject, parseScriptTag } from "../flv/script.js";
 import type { FlvTag } from "../flv/types.js";
+import { checkNalUnits, NAL_PROBLEMS, nalLengthSize, type NalProblem } from "../../shared/flv/nal.js";
 import { compositionTimeOffset, isKeyframe, parseVideoTag } from "../../shared/flv/video.js";
 import type { IngestAdapter } from "../ingest/types.js";
 import type { Logger } from "../logger.js";
@@ -53,6 +54,8 @@ const AUDIO_FORMATS: Record<number, string> = {
 const TIMESTAMP_JUMP_MS = 1000;
 /** Keyframe intervals are taken over a longer span than rates: GOPs can be several seconds. */
 const KEYFRAME_HISTORY_MS = 60_000;
+/** After the first malformed frame, at most one event (and warning) per drone this often. */
+const MALFORMED_REPORT_MS = 60_000;
 
 interface FrameSample {
   arrival: number;
@@ -73,6 +76,10 @@ interface Session {
   log: Logger;
   metadata: Record<string, JsonValue> | null;
   sequenceHeader: Buffer | undefined;
+  /** NAL length field size from the sequence header (AVC/HEVC only). */
+  nalLengthSize: number | undefined;
+  /** Malformed frames since the last event about them, and when that was. */
+  malformedReport: { lastAt: number | undefined; since: number };
   video: VideoFormatInfo | null;
   frames: FrameSample[];
   keyframes: KeyframeSample[];
@@ -226,6 +233,8 @@ export class StreamDiagnostics {
       log: this.options.logger.child({ droneId, sessionId }),
       metadata: null,
       sequenceHeader: undefined,
+      nalLengthSize: undefined,
+      malformedReport: { lastAt: undefined, since: 0 },
       video: null,
       frames: [],
       keyframes: [],
@@ -238,6 +247,8 @@ export class StreamDiagnostics {
         bytes: 0,
         sequenceHeaders: 0,
         timestampJumps: 0,
+        malformedFrames: 0,
+        nalProblems: Object.fromEntries(NAL_PROBLEMS.map((p) => [p, 0])) as Record<NalProblem, number>,
         audioTags: 0,
         audioCodec: null,
       },
@@ -319,6 +330,10 @@ export class StreamDiagnostics {
       if (!first && !changed) return;
       const before = session.video;
       session.sequenceHeader = tag.data;
+      session.nalLengthSize =
+        info.codec === "avc" || info.codec === "hevc"
+          ? nalLengthSize(tag.data.subarray(info.payloadOffset), info.codec)
+          : undefined;
       session.video = describeFormat(tag.data, info.codec, info.payloadOffset);
       session.log.info(
         { ...session.video, enhanced: info.enhanced, timestamp: tag.timestamp, changed },
@@ -346,6 +361,9 @@ export class StreamDiagnostics {
     session.logWindow.bytes += bytes;
     session.frames.push({ arrival: now, bytes });
     if (compositionTimeOffset(tag.data, info) !== 0) session.bFrames = true;
+    if (session.nalLengthSize !== undefined && (info.codec === "avc" || info.codec === "hevc")) {
+      this.checkNal(session, tag, info.payloadOffset, isKeyframe(info), now);
+    }
 
     if (session.lastDts !== undefined) {
       const step = tag.timestamp - session.lastDts;
@@ -368,6 +386,41 @@ export class StreamDiagnostics {
       }
     }
     this.prune(session, now);
+  }
+
+  /**
+   * Counts frames whose NAL length fields do not add up. Browsers (mpegts.js) drop the rest of
+   * such a frame; stricter receivers may give up on the stream. The first one is reported at
+   * once, later ones summed up at most every MALFORMED_REPORT_MS.
+   */
+  private checkNal(session: Session, tag: FlvTag, payloadOffset: number, key: boolean, now: number): void {
+    const payload = tag.data.subarray(payloadOffset);
+    const check = checkNalUnits(payload, session.nalLengthSize ?? 4);
+    if (!check.problem) return;
+    session.totals.malformedFrames++;
+    session.totals.nalProblems[check.problem]++;
+    const report = session.malformedReport;
+    report.since++;
+    if (report.lastAt !== undefined && now - report.lastAt < MALFORMED_REPORT_MS) return;
+    const detail = {
+      problem: check.problem,
+      keyframe: key,
+      offset: check.offset,
+      payloadBytes: payload.length,
+      unitsBefore: check.units,
+      lengthSize: session.nalLengthSize,
+      timestamp: tag.timestamp,
+      total: session.totals.malformedFrames,
+    };
+    const where = `${check.problem} at byte ${check.offset ?? 0} of ${payload.length} in ${key ? "a keyframe" : "an inter frame"}`;
+    const text =
+      report.lastAt === undefined
+        ? `malformed NAL units: ${where}`
+        : `${report.since} malformed frames in ${Math.round((now - report.lastAt) / 1000)} s, last: ${where}`;
+    session.log.warn({ ...detail, sinceLastReport: report.since }, "malformed NAL units");
+    const record = this.drones.get(session.droneId);
+    if (record) this.event(record, "malformed-nal", text);
+    session.malformedReport = { lastAt: now, since: 0 };
   }
 
   private onAudio(sessionId: string, tag: FlvTag): void {
@@ -455,6 +508,7 @@ export class StreamDiagnostics {
           bFrames: m.bFrames,
           totalFrames: session.totals.frames,
           totalKeyframes: session.totals.keyframes,
+          malformedFrames: session.totals.malformedFrames,
         },
         "stream stats",
       );

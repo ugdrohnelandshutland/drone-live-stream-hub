@@ -23,6 +23,17 @@ export function formatMegabytes(bytes: number): string {
   return `${Math.round(bytes / 1e6)} MB`;
 }
 
+/** "7,5 MB", "0,2 MB" (decimal units, one decimal). */
+export function formatFileSize(bytes: number): string {
+  return `${(bytes / 1e6).toLocaleString("de-DE", { maximumFractionDigits: 1, minimumFractionDigits: 1 })} MB`;
+}
+
+/** "26.10. 19:52:18" (local time). */
+export function dayAndTime(iso: string): string {
+  const date = new Date(iso);
+  return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}. ${clockTime(iso)}`;
+}
+
 /** "45 s", "12 min", "3 h 05 min", "2 d 4 h". */
 export function formatUptime(seconds: number): string {
   if (seconds < 60) return `${seconds} s`;

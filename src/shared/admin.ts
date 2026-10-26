@@ -89,6 +89,29 @@ export interface AdminEvent {
   detail?: string;
 }
 
+/**
+ * A raw recording of what one publisher sent, as an FLV file in `<dataDir>/captures` (for
+ * analysing real Pilot 2 streams). Download: GET /api/admin/captures/<file>.
+ */
+export interface AdminCapture {
+  /** File name, e.g. "m30t-01_2026-10-26T18-52-18-648Z.flv". */
+  file: string;
+  droneId: string;
+  startedAt: string;
+  recording: boolean;
+  bytes: number;
+  /** Set when it ended before the planned length. */
+  cutShort?: "offline" | "size" | "error" | "stopped";
+}
+
+/** POST /api/admin/captures answers 409 with this. */
+export interface AdminCaptureError {
+  error: "offline" | "busy";
+}
+
+/** Length of one capture: long enough to catch a few rare stream errors. */
+export const CAPTURE_SECONDS = 30;
+
 /** GET /api/admin/state */
 export interface AdminState {
   generatedAt: string;
@@ -98,6 +121,8 @@ export interface AdminState {
   eventsEpoch: string;
   /** Newest last; only those after `eventsAfter`. */
   events: AdminEvent[];
+  /** Newest first; null when the service has no data directory (captures off). */
+  captures: AdminCapture[] | null;
 }
 
 /** POST /api/admin/login answers 401 with this, or 429 while the address is locked out. */

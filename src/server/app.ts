@@ -15,6 +15,7 @@ import { Api } from "./delivery/api.js";
 import { DeliveryServer } from "./delivery/http-server.js";
 import { LiveHub } from "./delivery/live-hub.js";
 import { NmsIngestAdapter } from "./ingest/nms-adapter.js";
+import { StreamCapture } from "./diagnostics/stream-capture.js";
 import { StreamDiagnostics } from "./diagnostics/stream-diagnostics.js";
 import type { Logger } from "./logger.js";
 import { DroneRegistry } from "./registry/registry.js";
@@ -35,7 +36,10 @@ export interface ServiceOptions {
   info?: ServiceInfo;
   /** Periodic per-stream stats in the log (fps, kbit/s, keyframe interval); 0 disables the log line. */
   probeIntervalMs?: number;
-  /** Device names are kept in `<dataDir>/clients.json`; without it, in memory only. */
+  /**
+   * Device names are kept in `<dataDir>/clients.json`, raw stream captures in
+   * `<dataDir>/captures`; without it, names stay in memory and captures are off.
+   */
   dataDir?: string;
 }
 
@@ -118,6 +122,14 @@ export function createService(config: AppConfig, logger: Logger, options: Servic
     logger: logger.child({ module: "probe" }),
     summaryIntervalMs: options.probeIntervalMs ?? 30_000,
   });
+  // Raw FLV captures for analysing real streams, started from the admin page.
+  const captures = options.dataDir
+    ? new StreamCapture({
+        ingest,
+        dir: path.join(options.dataDir, "captures"),
+        logger: logger.child({ module: "capture" }),
+      })
+    : undefined;
   const diagnosticsReport = (): DiagnosticsResponse => {
     const delivery = hub.stats();
     return {
@@ -200,6 +212,7 @@ export function createService(config: AppConfig, logger: Logger, options: Servic
     clients,
     events,
     load: adminLoad,
+    ...(captures ? { captures } : {}),
     logger: logger.child({ module: "admin" }),
   });
 
@@ -241,6 +254,7 @@ export function createService(config: AppConfig, logger: Logger, options: Servic
     clients,
     async start() {
       if (names instanceof FileClientNames) await names.load();
+      await captures?.start();
       await ingest.start();
       await delivery.start();
       diagnostics.start();
@@ -248,6 +262,7 @@ export function createService(config: AppConfig, logger: Logger, options: Servic
     async stop() {
       diagnostics.stop();
       await ingest.stop();
+      await captures?.stop();
       await delivery.stop();
       clients.stop();
       if (names instanceof FileClientNames) await names.flush();

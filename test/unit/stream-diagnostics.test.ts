@@ -17,11 +17,13 @@ const AVC_SEQ = Buffer.concat([
   Buffer.from([1, 0, 4, 0x68, 0xeb, 0xe3, 0xcb]),
 ]);
 
-/** Coded AVC frame with a composition time offset (B-frames when non-zero). */
+/** Coded AVC frame of one NAL unit (`size` bytes with its length field) and a composition time offset. */
 function frame(key: boolean, size: number, cts = 0): Buffer {
   const header = Buffer.from([key ? 0x17 : 0x27, 0x01, 0, 0, 0]);
   header.writeIntBE(cts, 2, 3);
-  return Buffer.concat([header, Buffer.alloc(size)]);
+  const length = Buffer.alloc(4);
+  length.writeUInt32BE(size - 4);
+  return Buffer.concat([header, length, Buffer.alloc(size - 4, key ? 0x65 : 0x41)]);
 }
 
 function metadata(fields: Record<string, number | string>): Buffer {
@@ -138,6 +140,7 @@ describe("StreamDiagnostics", () => {
       keyframes: 6,
       sequenceHeaders: 1,
       timestampJumps: 0,
+      malformedFrames: 0,
       audioTags: 1,
       audioCodec: "AAC",
     });
@@ -169,6 +172,34 @@ describe("StreamDiagnostics", () => {
       "replaced",
       "timestamp-jump",
       "publish",
+    ]);
+  });
+
+  it("counts malformed NAL units and reports them at most once a minute", () => {
+    const t = setup();
+    t.ingest.publish("m30t-01", "s1", "10.0.0.7:1");
+    t.ingest.video("s1", AVC_SEQ);
+    const bad = (body: number[], key = false) =>
+      Buffer.concat([Buffer.from([key ? 0x17 : 0x27, 0x01, 0, 0, 0]), Buffer.from(body)]);
+    t.ingest.video("s1", frame(true, 100), 0);
+    // One good NAL unit, then a length that runs past the end of the frame.
+    t.ingest.video("s1", bad([0, 0, 0, 2, 0x41, 0, 0, 0, 0, 9, 0x41]), 33);
+    t.advance(10_000);
+    t.ingest.video("s1", bad([0, 0, 0, 0]), 66);
+    t.ingest.video("s1", bad([0, 0, 0, 1, 0x65, 0x88, 0x84], true), 99);
+    t.advance(50_000);
+    t.ingest.video("s1", bad([0, 0, 0, 2, 0x41, 0, 0, 0]), 132);
+
+    const d = t.diagnostics.snapshot("m30t-01")!;
+    expect(d.totals).toMatchObject({
+      frames: 5,
+      malformedFrames: 4,
+      nalProblems: { overrun: 1, "zero-length": 1, "start-code": 1, "trailing-bytes": 1 },
+    });
+    const reports = d.events.filter((e) => e.kind === "malformed-nal").map((e) => e.text);
+    expect(reports).toEqual([
+      "3 malformed frames in 60 s, last: trailing-bytes at byte 6 of 8 in an inter frame",
+      "malformed NAL units: overrun at byte 6 of 11 in an inter frame",
     ]);
   });
 

@@ -27,6 +27,34 @@ describe("FlvSplicer", () => {
     expect(tags[6]?.data).toEqual(sequenceHeader(2).data);
   });
 
+  it("leaves out frames during a dropout but keeps sequence headers and the session", () => {
+    const chunks: Buffer[] = [];
+    let now = 0;
+    const splicer = new FlvSplicer(
+      (c) => (chunks.push(c), true),
+      false,
+      33,
+      () => now,
+    );
+    splicer.beginSegment();
+    splicer.push(file([sequenceHeader(1), keyframe(0), interframe(33)]));
+    splicer.dropFor(2000);
+    now = 1000;
+    splicer.push(file([interframe(66), sequenceHeader(2, 1000), keyframe(1000)]).subarray(13));
+    now = 2000;
+    splicer.push(file([interframe(2033), interframe(2066)]).subarray(13));
+
+    const tags = new FlvStreamParser().push(Buffer.concat(chunks));
+    expect(tags.map((t) => [t.timestamp, t.data[0], t.data[1]])).toEqual([
+      [0, 0x17, 0],
+      [0, 0x17, 1],
+      [33, 0x27, 1],
+      [1000, 0x17, 0],
+      [2033, 0x27, 1],
+      [2066, 0x27, 1],
+    ]);
+  });
+
   it("passes the destination's backpressure through", () => {
     const splicer = new FlvSplicer(() => false, false, 33);
     expect(splicer.push(file([keyframe(0)]))).toBe(false);

@@ -151,6 +151,24 @@ export const t = {
 
     eventsTitle: "Ereignisse",
     noEvents: "Noch keine Ereignisse seit dem Start des Dienstes.",
+
+    capturesTitle: "Mitschnitte",
+    capturesDetail: (seconds: number) =>
+      `Speichert ${seconds} s des Streams einer Drohne unverändert als FLV-Datei – zur Analyse der echten Fernsteuerungs-Daten. Die letzten 20 Dateien bleiben erhalten.`,
+    capturesOff: "Mitschnitte sind aus: Der Dienst läuft ohne Datenordner.",
+    capture: (seconds: number) => `${seconds} s mitschneiden`,
+    captureRunning: "Mitschnitt läuft …",
+    captureOffline: "Die Drohne ist nicht live.",
+    captureBusy: "Für diese Drohne läuft schon ein Mitschnitt.",
+    captureFailed: "Mitschnitt nicht möglich – Server nicht erreichbar.",
+    noCaptures: "Noch keine Mitschnitte.",
+    download: "Herunterladen",
+    captureCutShort: {
+      offline: "abgebrochen: Drohne offline",
+      size: "abgebrochen: Größenlimit",
+      error: "abgebrochen: Schreibfehler",
+      stopped: "abgebrochen: Dienst beendet",
+    },
   },
 
   diagnostics: {

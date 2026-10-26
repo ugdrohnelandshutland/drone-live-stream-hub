@@ -2,7 +2,7 @@ import type { DroneDiagnostics, JsonValue } from "../../../shared/diagnostics";
 import { StatusBadge } from "../../components/status-badge";
 import type { StatusView } from "../../player/player-status";
 import { t } from "../../strings";
-import { findings, SIMULATOR_PROFILE } from "./checks";
+import { findings, malformedSummary, SIMULATOR_PROFILE } from "./checks";
 
 export function time(iso: string | null): string {
   if (!iso) return "–";
@@ -159,6 +159,7 @@ export function DroneCard({ drone }: { drone: DroneDiagnostics }) {
                     ["Daten", totals ? megabytes(totals.bytes) : "–"],
                     ["Sequence Header", num(totals?.sequenceHeaders)],
                     ["Zeitstempel-Sprünge", num(totals?.timestampJumps)],
+                    ["Fehlerhafte NAL-Struktur", malformedSummary(totals)],
                   ]}
                 />
               </tbody>

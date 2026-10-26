@@ -6,6 +6,7 @@ import { ThemeSwitch } from "../../components/theme-switch";
 import { useDocumentTitle } from "../../lib/use-document-title";
 import { apiPost, HttpError } from "../../service/http";
 import { t } from "../../strings";
+import { CapturePanel } from "./capture-panel";
 import { ClientCard } from "./client-card";
 import { clockTime, eventText, formatKbps, formatMegabytes, formatUptime } from "./admin-format";
 import { useAdminState } from "./use-admin-state";
@@ -67,6 +68,7 @@ function AdminContent(props: { state: AdminState; events: readonly AdminEvent[];
         )}
       </section>
       <LoadPanel load={state.load} />
+      <CapturePanel captures={state.captures} drones={state.load.drones} onChanged={onChanged} />
       <section className="admin-section" aria-labelledby="admin-events">
         <h2 id="admin-events">{t.admin.eventsTitle}</h2>
         {events.length === 0 ? (

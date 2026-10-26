@@ -313,6 +313,22 @@ export class SimulatedDrone extends EventEmitter {
     await this.start(camera);
   }
 
+  /**
+   * Leaves out all frames for `ms` while the RTMP session stays open, like the pauses of a
+   * real RC Plus. Inline switch mode only (the splicer sits between encoder and pusher).
+   */
+  dropout(ms: number): void {
+    if (!this.splicer) {
+      this.options.logger.warn(
+        { droneId: this.id, mode: this.switchMode },
+        "dropout needs a running inline drone",
+      );
+      return;
+    }
+    this.options.logger.info({ droneId: this.id, ms }, "dropout");
+    this.splicer.dropFor(ms);
+  }
+
   private async overlayFile(): Promise<string> {
     const { width, height } = resolutionFor(this.options.profile, this._camera);
     const dir = path.join(os.tmpdir(), "drone-live-stream-hub-sim");

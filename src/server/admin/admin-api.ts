@@ -1,10 +1,19 @@
 import { randomUUID } from "node:crypto";
+import { createReadStream } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { ADMIN_NAME_MAX, type AdminLoad, type AdminLoginError, type AdminState } from "../../shared/admin.js";
+import {
+  ADMIN_NAME_MAX,
+  CAPTURE_SECONDS,
+  type AdminCaptureError,
+  type AdminLoad,
+  type AdminLoginError,
+  type AdminState,
+} from "../../shared/admin.js";
 import { readCookie } from "../clients/client-cookie.js";
 import type { ClientRegistry } from "../clients/client-registry.js";
 import { displayAddress } from "../clients/user-agent.js";
 import { sendJson } from "../delivery/api.js";
+import type { StreamCapture } from "../diagnostics/stream-capture.js";
 import type { Logger } from "../logger.js";
 import type { AdminAuth } from "./admin-auth.js";
 import type { EventLog } from "./event-log.js";
@@ -15,12 +24,15 @@ export interface AdminApiOptions {
   clients: ClientRegistry;
   events: EventLog;
   load: () => AdminLoad;
+  /** Raw stream captures; undefined without a data directory. */
+  captures?: StreamCapture;
   logger: Logger;
 }
 
 const SESSION_COOKIE = "dlsh_admin";
 const MAX_BODY_BYTES = 1024;
 const CLIENT_ACTION = /^\/api\/admin\/clients\/([^/]+)\/(pause|resume|reload|name)$/;
+const CAPTURE_FILE = /^\/api\/admin\/captures\/([^/]+)$/;
 
 class BadRequest extends Error {}
 
@@ -136,8 +148,47 @@ export class AdminApi {
         load: this.options.load(),
         eventsEpoch: this.epoch,
         events: this.options.events.after(Number.isFinite(after) ? after : 0),
+        captures: this.options.captures?.list() ?? null,
       };
       sendJson(res, 200, body);
+      return;
+    }
+
+    const { captures } = this.options;
+    if (pathname === "/api/admin/captures" && post && captures) {
+      const droneId = field(await readJson(req), "droneId");
+      if (typeof droneId !== "string") throw new BadRequest("droneId missing");
+      const result = captures.begin(droneId, CAPTURE_SECONDS);
+      if (result.ok) {
+        this.options.logger.info({ droneId, file: result.capture.file, address }, "admin started capture");
+        sendJson(res, 200, result.capture);
+      } else {
+        sendJson(res, 409, { error: result.error } satisfies AdminCaptureError);
+      }
+      return;
+    }
+
+    const [, file] = CAPTURE_FILE.exec(pathname) ?? [];
+    if (file !== undefined && !post && captures) {
+      const filePath = captures.filePath(file);
+      if (!filePath) {
+        sendJson(res, 404, { error: "unknown capture" });
+        return;
+      }
+      const stream = createReadStream(filePath);
+      stream.on("open", () => {
+        res.writeHead(200, {
+          "content-type": "video/x-flv",
+          "content-disposition": `attachment; filename="${file}"`,
+          "cache-control": "no-store",
+        });
+        stream.pipe(res);
+      });
+      stream.on("error", (err) => {
+        this.options.logger.warn({ err, file }, "cannot read capture");
+        if (!res.headersSent) sendJson(res, 404, { error: "unknown capture" });
+        else res.destroy();
+      });
       return;
     }
 

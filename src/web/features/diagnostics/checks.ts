@@ -1,5 +1,6 @@
 /** What the diagnostics page flags, compared with the simulator profile (no DOM, unit-tested). */
 import type { DroneDiagnostics } from "../../../shared/diagnostics";
+import { NAL_PROBLEMS, type NalProblem } from "../../../shared/flv/nal";
 
 export interface Finding {
   level: "warn" | "info";
@@ -18,6 +19,29 @@ export const SIMULATOR_PROFILE = {
   arrivalGap: "< 200 ms",
   audio: "keine",
 } as const;
+
+const NAL_PROBLEM_TEXT: Record<NalProblem, string> = {
+  overrun: "Länge zu groß",
+  "zero-length": "Länge 0",
+  "trailing-bytes": "Restbytes am Ende",
+  "start-code": "Startcode statt Länge",
+};
+
+type Totals = NonNullable<DroneDiagnostics["totals"]>;
+
+/** "Länge zu groß 10, Länge 0 2" */
+function nalProblems(totals: Totals): string {
+  return NAL_PROBLEMS.filter((p) => totals.nalProblems[p] > 0)
+    .map((p) => `${NAL_PROBLEM_TEXT[p]} ${totals.nalProblems[p].toLocaleString("de-DE")}`)
+    .join(", ");
+}
+
+/** "12 (Länge zu groß 10, Länge 0 2)", "0" */
+export function malformedSummary(totals: Totals | null): string {
+  if (!totals) return "–";
+  const count = totals.malformedFrames.toLocaleString("de-DE");
+  return totals.malformedFrames > 0 ? `${count} (${nalProblems(totals)})` : count;
+}
 
 const KEYFRAME_WARN_MS = 2500;
 const ARRIVAL_GAP_WARN_MS = 500;
@@ -79,6 +103,12 @@ export function findings(drone: DroneDiagnostics): Finding[] {
     out.push({
       level: "info",
       text: `${totals.timestampJumps} Zeitstempel-Sprünge (z. B. bei Kamerawechsel). Die Wiedergabe fängt das ab.`,
+    });
+  }
+  if (totals && totals.malformedFrames > 0) {
+    out.push({
+      level: "warn",
+      text: `${totals.malformedFrames.toLocaleString("de-DE")} Bilder mit fehlerhafter NAL-Struktur (${nalProblems(totals)}). Browser verwerfen den Rest dieser Bilder (kurze Bildfehler); strengere Empfänger brechen ab.`,
     });
   }
   if (totals && totals.audioTags > 0) {

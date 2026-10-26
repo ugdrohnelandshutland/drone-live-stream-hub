@@ -1,0 +1,22 @@
+{
+  "name": "pilot2-real",
+  "description": "Two drones with the values measured from real RC Plus in the first field test (2026-10-26): 1920×1088, zoom 1440×1088, thermal 1080×720, about 2 Mbit/s, a keyframe every second, and pauses of 1–4.5 s in which the RC sends nothing while the session stays open. Expected: viewers stay connected through the pauses (the picture stands still, then continues), camera switches give 4001 stream-reset and playback resumes.",
+  "duration": "120s",
+  "drones": [
+    { "id": "m30t-01", "profile": "pilot2-real" },
+    { "id": "m30t-02", "profile": "pilot2-real" }
+  ],
+  "timeline": [
+    { "at": "0s", "drone": "*", "action": "start", "camera": "wide" },
+    { "at": "15s", "drone": "m30t-01", "action": "dropout", "for": "1500ms" },
+    { "at": "25s", "drone": "m30t-02", "action": "dropout", "for": "3s" },
+    { "at": "30s", "drone": "m30t-01", "action": "switchCamera", "camera": "zoom" },
+    { "at": "40s", "drone": "m30t-01", "action": "dropout", "for": "4500ms" },
+    { "at": "50s", "drone": "m30t-02", "action": "switchCamera", "camera": "thermal" },
+    { "at": "60s", "drone": "m30t-01", "action": "switchCamera", "camera": "wide" },
+    { "at": "70s", "drone": "m30t-02", "action": "dropout", "for": "2s" },
+    { "at": "75s", "drone": "m30t-02", "action": "switchCamera", "camera": "wide" },
+    { "at": "90s", "drone": "*", "action": "dropout", "for": "1s" },
+    { "at": "100s", "drone": "m30t-01", "action": "switchCamera", "camera": "thermal" }
+  ]
+}

@@ -149,6 +149,20 @@ describe("admin API (ADR 0012)", () => {
     }
   });
 
+  it("refuses captures of offline drones and serves only known capture files", async () => {
+    expect((await state()).captures).toEqual([]);
+    const res = await post("/api/admin/captures", { droneId: "m30t-01" });
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({ error: "offline" });
+    expect((await post("/api/admin/captures", {})).status).toBe(400);
+
+    const get = (file: string, cookie = adminCookie) =>
+      fetch(`${base}/api/admin/captures/${file}`, { headers: { cookie } });
+    expect((await get("m30t-01_2026-10-25T08-10-00-000Z.flv")).status).toBe(404);
+    expect((await get("..%2Fclients.json")).status).toBe(404);
+    expect((await get("m30t-01_2026-10-25T08-10-00-000Z.flv", "")).status).toBe(401);
+  });
+
   it("names devices and keeps the names on disk", async () => {
     const res = await post("/api/admin/clients/tablet-0123456789abcdef/name", { name: "ELW Großbildschirm" });
     expect(res.status).toBe(200);

@@ -1,10 +1,18 @@
 /** JSON shapes of GET /api/diagnostics: what each publisher actually sends (dev/field tests). */
 import type { ServiceInfo } from "./api.js";
+import type { NalProblem } from "./flv/nal.js";
 
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 export type DiagnosticsEventKind =
-  "publish" | "unpublish" | "replaced" | "sequence-header" | "metadata" | "timestamp-jump" | "rejected";
+  | "publish"
+  | "unpublish"
+  | "replaced"
+  | "sequence-header"
+  | "metadata"
+  | "timestamp-jump"
+  | "malformed-nal"
+  | "rejected";
 
 export interface DiagnosticsEvent {
   /** ISO time. */
@@ -55,6 +63,10 @@ export interface StreamTotals {
   bytes: number;
   sequenceHeaders: number;
   timestampJumps: number;
+  /** Coded frames whose NAL units do not add up (the service forwards them unchanged). */
+  malformedFrames: number;
+  /** Malformed frames by the first problem found in each. */
+  nalProblems: Record<NalProblem, number>;
   audioTags: number;
   /** e.g. "AAC"; audio is dropped by the service. */
   audioCodec: string | null;

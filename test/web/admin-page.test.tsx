@@ -31,6 +31,16 @@ function adminState(clients: AdminClient[]): AdminState {
     },
     eventsEpoch: "run-1",
     events: [{ seq: 1, at: "2026-10-25T08:00:00.000Z", kind: "drone-live", droneId: "m30t-01" }],
+    captures: [
+      {
+        file: "m30t-01_2026-10-25T08-10-00-000Z.flv",
+        droneId: "m30t-01",
+        startedAt: "2026-10-25T08:10:00.000Z",
+        recording: false,
+        bytes: 7_480_000,
+        cutShort: "offline",
+      },
+    ],
   };
 }
 
@@ -59,6 +69,7 @@ beforeEach(() => {
     }
     if (!loggedIn) return json(401, { error: "login required" });
     if (url.startsWith("/api/admin/state")) return json(200, adminState([tablet]));
+    if (url === "/api/admin/captures") return json(409, { error: "busy" });
     return json(200, { ok: true });
   });
   // jsdom has no modal dialogs yet.
@@ -115,5 +126,23 @@ describe("admin page", () => {
       url: "/api/admin/clients/tablet-1/name",
       body: { name: "Abschnitt Nord" },
     });
+  });
+
+  it("starts a capture and offers the finished ones for download", async () => {
+    loggedIn = true;
+    render(<AdminPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Drohne 1: 30 s mitschneiden" }));
+    await act(async () => undefined);
+    expect(requests).toContainEqual({
+      method: "POST",
+      url: "/api/admin/captures",
+      body: { droneId: "m30t-01" },
+    });
+    expect(await screen.findByText("Für diese Drohne läuft schon ein Mitschnitt.")).toBeTruthy();
+
+    const link = screen.getByRole("link", { name: "Herunterladen" });
+    expect(link.getAttribute("href")).toBe("/api/admin/captures/m30t-01_2026-10-25T08-10-00-000Z.flv");
+    expect(screen.getByText("7,5 MB")).toBeTruthy();
+    expect(screen.getByText(/abgebrochen: Drohne offline/)).toBeTruthy();
   });
 });

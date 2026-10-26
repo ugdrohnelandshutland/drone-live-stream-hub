@@ -100,6 +100,21 @@ describe("LiveChannel", () => {
     expect(next.tags).toEqual([metadataTag(), sequenceHeader(7, 4000), keyframe(4000)]);
   });
 
+  it("keeps viewers when the same sequence header comes before every keyframe (real RC Plus)", () => {
+    goLive();
+    const viewer = new FakeViewer();
+    channel.addViewer(viewer);
+    channel.videoTag("s1", sequenceHeader(0, 1000));
+    channel.videoTag("s1", keyframe(1000));
+    channel.videoTag("s1", interframe(1033));
+    expect(viewer.closed).toBeUndefined();
+    expect(viewer.tags.slice(-2)).toEqual([keyframe(1000), interframe(1033)]);
+
+    const next = new FakeViewer();
+    channel.addViewer(next);
+    expect(next.tags).toEqual([metadataTag(), sequenceHeader(0, 1000), keyframe(1000), interframe(1033)]);
+  });
+
   it("replaces a live publisher with 4001 and ignores the old session afterwards", () => {
     goLive("old");
     const viewer = new FakeViewer();
