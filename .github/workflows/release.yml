@@ -1,4 +1,5 @@
 # On a version tag (v0.2.0): test, build the Windows package and attach it to a release.
+# A tag with a pre-release part (v0.10.0-beta.1) becomes a GitHub pre-release, never "Latest".
 # "Run workflow" with a tag builds a release for an existing tag (e.g. one pushed before
 # this workflow existed); the tag's code is built, with the CI setup from the chosen branch.
 name: release
@@ -57,5 +58,7 @@ jobs:
           sha="$(cut -d' ' -f1 "$zip.sha256")"
           npx tsx scripts/release-notes.ts "$TAG" --zip "$zip" --sha256 "$sha" --repo-url "$REPO_URL" > release/notes.md
           cat release/notes.md
+          prerelease=()
+          case "$TAG" in *-*) prerelease=(--prerelease --latest=false) ;; esac
           gh release create "$TAG" "$zip" "$zip.sha256" \
-            --title "$TAG" --notes-file release/notes.md --verify-tag
+            --title "$TAG" --notes-file release/notes.md --verify-tag "${prerelease[@]}"

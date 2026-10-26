@@ -9,9 +9,15 @@ describe("changelog", () => {
   });
 
   it("lists each version once, in descending order, with a date and changes", () => {
-    // Fits three numbers of up to 999 each into one comparable number.
-    const rank = (version: string) => version.split(".").reduce((sum, part) => sum * 1000 + Number(part), 0);
+    // Fits three numbers of up to 999 each into one comparable number; a beta (0.10.0-beta.2)
+    // ranks below its release and above earlier betas.
+    const rank = (version: string) => {
+      const [release = "", beta] = version.split("-beta.");
+      const base = release.split(".").reduce((sum, part) => sum * 1000 + Number(part), 0);
+      return base * 1000 + (beta === undefined ? 999 : Number(beta));
+    };
     const ranks = changelog.map((r) => rank(r.version));
+    expect(ranks.every(Number.isFinite), "versions look like 1.2.3 or 1.2.3-beta.4").toBe(true);
     expect(ranks).toEqual([...ranks].sort((a, b) => b - a));
     expect(new Set(ranks).size).toBe(ranks.length);
     for (const release of changelog) {

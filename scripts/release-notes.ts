@@ -21,9 +21,12 @@ if (!tag) {
   process.exit(2);
 }
 
+// A final release lists everything since the previous final release, skipping its betas;
+// a pre-release (v0.10.0-beta.2) lists what changed since the tag before it.
+const skipPrereleases = tag.includes("-") ? [] : ["--exclude", "*-*"];
 let previousTag: string | null = null;
 try {
-  previousTag = git("describe", "--tags", "--abbrev=0", `${tag}^`);
+  previousTag = git("describe", "--tags", "--abbrev=0", ...skipPrereleases, `${tag}^`);
 } catch {
   // first release: no earlier tag
 }
