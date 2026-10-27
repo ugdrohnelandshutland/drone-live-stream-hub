@@ -21,6 +21,7 @@ const live: DroneStatus = {
   state: "live",
   since: new Date(2026, 9, 9, 14, 3).toISOString(),
   sessionId: "s",
+  stalledSince: null,
   viewerCount: 2,
   video: { codec: "avc", codecString: "avc1.640028", width: 1920, height: 1080 },
 };

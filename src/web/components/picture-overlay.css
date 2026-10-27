@@ -52,3 +52,31 @@
     transition: none;
   }
 }
+
+/* The last picture stays visible: a bar at the bottom edge, marked in the status colour. */
+.picture-hint {
+  --tone: var(--on-bezel-quiet);
+  position: absolute;
+  inset: auto 0 0;
+  display: grid;
+  gap: 0.2em;
+  padding: var(--space-2) var(--space-3);
+  border-left: 6px solid var(--tone);
+  background: rgb(0 0 0 / 0.72);
+  color: var(--on-bezel);
+  pointer-events: none;
+}
+.picture-hint[data-tone="nosignal"] {
+  --tone: var(--nosignal);
+}
+
+.picture-hint-title {
+  font-size: var(--overlay-detail, var(--text-sm));
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.picture-hint-detail {
+  color: var(--on-bezel-quiet);
+  font-size: var(--text-sm);
+}

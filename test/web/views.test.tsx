@@ -13,6 +13,7 @@ class FakePlayer {
   static instances: FakePlayer[] = [];
   started = false;
   destroyed = false;
+  sourceStalled = false;
   constructor(readonly options: LivePlayerOptions) {
     FakePlayer.instances.push(this);
   }
@@ -21,6 +22,9 @@ class FakePlayer {
   }
   destroy(): void {
     this.destroyed = true;
+  }
+  setSourceStalled(stalled: boolean): void {
+    this.sourceStalled = stalled;
   }
   emit(status: PlayerStatus): void {
     this.options.onStatus(status);
@@ -95,28 +99,61 @@ describe("single view", () => {
     expect(FakePlayer.only().options.tuning).toEqual({ syncTarget: 0.2 });
   });
 
-  it("shows 'Kein Signal' in badge and overlay together, only after a short interruption has lasted", () => {
+  it("keeps a stalled picture with its cause, only after a short interruption has lasted", () => {
     vi.useFakeTimers();
     const { container } = renderApp("/drone/m30t-01");
+    act(() => sse().snapshot([drone("m30t-01", "live")]));
     const badge = () => container.querySelector<HTMLElement>(".status")!;
     const overlayShown = () => container.querySelector(".picture-overlay")!.hasAttribute("data-visible");
+    const hint = () => container.querySelector(".picture-hint")?.textContent ?? null;
 
     act(() => FakePlayer.only().emit("playing"));
     expect(badge().dataset["state"]).toBe("playing");
-    expect(overlayShown()).toBe(false);
+    expect(hint()).toBeNull();
 
     act(() => FakePlayer.only().emit("stalled"));
     act(() => vi.advanceTimersByTime(500));
     expect(badge().dataset["state"]).toBe("playing"); // camera switch: no flicker
-    expect(overlayShown()).toBe(false);
+    expect(hint()).toBeNull();
 
+    // The drone sends: this device's connection is the cause. The last picture stays.
     act(() => vi.advanceTimersByTime(500));
     expect(badge().dataset["state"]).toBe("stalled");
-    expect(overlayShown()).toBe(true);
-    expect(screen.getByText("Das Bild steht – warte auf neue Daten …")).toBeTruthy();
+    expect(overlayShown()).toBe(false);
+    expect(hint()).toContain("Schwache Verbindung");
+    expect(badge().textContent).toBe("Verzögert");
+    expect(FakePlayer.only().sourceStalled).toBe(false);
+
+    // The hub reports the drone silent: same picture, other cause, and no player restart.
+    act(() => sse().updated({ ...drone("m30t-01", "live"), stalledSince: "2026-10-10T08:00:00.000Z" }));
+    expect(overlayShown()).toBe(false);
+    expect(hint()).toContain("Drohne sendet gerade keine Bilder");
+    expect(badge().textContent).toBe("Bild steht");
+    expect(FakePlayer.only().sourceStalled).toBe(true);
 
     act(() => FakePlayer.only().emit("playing"));
-    expect(overlayShown()).toBe(false);
+    expect(hint()).toBeNull();
+
+    // "Kein Signal" once the hub reports the drone gone.
+    act(() => sse().updated(drone("m30t-01", "offline")));
+    act(() => FakePlayer.only().emit("offline"));
+    act(() => vi.advanceTimersByTime(1000));
+    expect(overlayShown()).toBe(true);
+    expect(screen.getAllByText("Kein Signal").length).toBeGreaterThan(0);
+  });
+
+  it("shows no 'Kein Signal' while a live drone's picture is only connecting", () => {
+    vi.useFakeTimers();
+    const { container } = renderApp("/drone/m30t-01");
+    act(() => sse().snapshot([drone("m30t-01", "live")]));
+    act(() => FakePlayer.only().emit("waiting"));
+    act(() => vi.advanceTimersByTime(1000));
+    expect(container.querySelector(".picture-overlay-title")?.textContent).toBe("Verbinde …");
+
+    act(() => sse().updated({ ...drone("m30t-01", "live"), stalledSince: "2026-10-10T08:00:00.000Z" }));
+    expect(container.querySelector(".picture-overlay-title")?.textContent).toBe(
+      "Drohne sendet gerade keine Bilder",
+    );
   });
 
   it("enables the still image only while a picture is shown", () => {

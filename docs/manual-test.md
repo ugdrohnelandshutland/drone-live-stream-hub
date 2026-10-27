@@ -36,6 +36,9 @@ Devices: Chrome on Android tablet · Chrome on iPad (iPadOS ≥ 17.1) · Chrome 
 - [ ] Picture appears within ~1 s; name and "Live" shown
 - [ ] `?stats`: note latency (avg / p95): ______
 - [ ] Drone stops → "Kein Signal" after ~1 s; drone back → picture returns by itself
+- [ ] Drone pauses (`stall` in the ingest chaos proxy, < 10 s): the last picture stays with
+      "Drohne sendet gerade keine Bilder" at the bottom edge and "Bild steht" in the strip; no
+      "Kein Signal". Pause > 10 s: "Kein Signal" once the hub drops the publisher
 - [ ] Camera switch (`--switch-every 8`): picture continues with the new resolution; strip
       stays "Live" (no flicker to "Kein Signal")
 - [ ] Fullscreen button works; "Übersicht", the browser's back button and the back swipe in
@@ -76,7 +79,8 @@ overview and a single view in the browser:
 Press `s` (3 s stall), `c` (cut) and `h` (heal) in the proxy terminal.
 
 - [ ] Latency with jitter (note avg/p95): ______
-- [ ] Stall: picture freezes, "Kein Signal" after ~2 s, continues by itself
+- [ ] Stall: picture freezes with "Schwache Verbindung" at the bottom edge and "Verzögert" in
+      the strip after ~3 s (no "Kein Signal"), continues by itself
 - [ ] Cut: "Verbindung gestört", picture back after heal
 
 ## Admin page `/admin` (ADR 0012)

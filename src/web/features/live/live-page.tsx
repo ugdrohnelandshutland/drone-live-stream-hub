@@ -140,7 +140,16 @@ export function LivePage({ focusId, options }: LivePageProps) {
 }
 
 function placeholderDrone(id: string): DroneStatus {
-  return { id, name: id, state: "live", since: null, sessionId: null, viewerCount: 0, video: null };
+  return {
+    id,
+    name: id,
+    state: "live",
+    since: null,
+    sessionId: null,
+    stalledSince: null,
+    viewerCount: 0,
+    video: null,
+  };
 }
 
 /** `/drone/<id>` for an id that is not configured: reported at once, no player. */

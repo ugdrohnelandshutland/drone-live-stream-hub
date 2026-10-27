@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import {
   LivePlayer,
   type LatencyTuning,
@@ -12,6 +12,8 @@ export interface LivePlayerHookOptions {
   url: string | undefined;
   mode?: StreamMode | undefined;
   tuning?: Partial<LatencyTuning> | undefined;
+  /** The hub reports that the drone sends no video: keep a stalled picture instead of restarting. */
+  sourceStalled?: boolean | undefined;
   onStatus?: ((status: PlayerStatus) => void) | undefined;
   /** Raw WebSocket events (recording). */
   onStreamEvent?: ((event: StreamEvent) => void) | undefined;
@@ -23,9 +25,11 @@ export interface LivePlayerHookOptions {
  */
 export function useLivePlayer(
   video: HTMLVideoElement | null,
-  { url, mode = "full", tuning, onStatus, onStreamEvent }: LivePlayerHookOptions,
+  { url, mode = "full", tuning, sourceStalled = false, onStatus, onStreamEvent }: LivePlayerHookOptions,
 ): PlayerStatus {
   const [status, setStatus] = useState<PlayerStatus>("connecting");
+  const playerRef = useRef<LivePlayer | undefined>(undefined);
+  const sourceStalledRef = useRef(sourceStalled);
   const reportStatus = useEffectEvent((next: PlayerStatus) => onStatus?.(next));
   const reportStreamEvent = useEffectEvent((event: StreamEvent) => onStreamEvent?.(event));
 
@@ -45,14 +49,23 @@ export function useLivePlayer(
       },
       onStreamEvent: reportStreamEvent,
     });
+    player.setSourceStalled(sourceStalledRef.current);
+    playerRef.current = player;
     player.start();
     return () => {
+      playerRef.current = undefined;
       player.destroy();
       // The next player starts from "connecting"; tell the caller too.
       setStatus("connecting");
       reportStatus("connecting");
     };
   }, [video, url, mode, tuningKey]);
+
+  // Not a reason to recreate the player: passed on to the running one.
+  useEffect(() => {
+    sourceStalledRef.current = sourceStalled;
+    playerRef.current?.setSourceStalled(sourceStalled);
+  }, [sourceStalled]);
 
   return status;
 }

@@ -43,6 +43,20 @@ export const t = {
     fullscreenExit: "Vollbild beenden",
   },
 
+  /** A live drone whose picture stopped (player-status.ts stalledView). */
+  stall: {
+    drone: {
+      label: "Bild steht",
+      title: "Drohne sendet gerade keine Bilder",
+      detail: "Das letzte Bild bleibt stehen – es geht automatisch weiter.",
+    },
+    connection: {
+      label: "Verzögert",
+      title: "Schwache Verbindung",
+      detail: "Dieses Gerät empfängt das Bild nicht schnell genug – die Drohne sendet normal.",
+    },
+  },
+
   paused: {
     label: "Angehalten",
     title: "Übertragung angehalten",

@@ -61,6 +61,7 @@ export function drone(id: string, state: DroneStatus["state"], name = `Drohne ${
     state,
     since: "2026-10-10T08:00:00.000Z",
     sessionId: state === "live" ? `s-${id}` : null,
+    stalledSince: null,
     viewerCount: 0,
     video: null,
   };

@@ -12,6 +12,8 @@ interface DroneEntry {
   replacements: number[];
   /** Size from onMetaData, used when the sequence header does not reveal it (e.g. HEVC). */
   metadataSize: { width: number; height: number } | undefined;
+  /** Time (ms) of the last video tag, or of the publish while none has arrived yet. */
+  lastVideoAt: number;
 }
 
 export interface RejectedPublish {
@@ -33,6 +35,12 @@ export interface RegistryEvents {
 /** This many replacements within the window means two publishers fight over one key. */
 const FLAPPING_REPLACEMENTS = 3;
 const FLAPPING_WINDOW_MS = 60_000;
+/**
+ * Live without a video tag for this long counts as stalled. Real RC Plus streams have gaps of
+ * 1–4.5 s (field test 2026-10-26); at 30 fps a normal gap is 33 ms. Short enough that the web
+ * UI knows the cause before its own stall detection (2 s) fires.
+ */
+export const PUBLISHER_STALL_MS = 1000;
 
 export class DroneRegistry extends EventEmitter<RegistryEvents> {
   private readonly drones = new Map<string, DroneEntry>();
@@ -53,10 +61,12 @@ export class DroneRegistry extends EventEmitter<RegistryEvents> {
           state: "offline",
           since: null,
           sessionId: null,
+          stalledSince: null,
           viewerCount: 0,
           video: null,
         },
         metadataSize: undefined,
+        lastVideoAt: 0,
         replacements: [],
       });
     }
@@ -76,6 +86,7 @@ export class DroneRegistry extends EventEmitter<RegistryEvents> {
     });
     ingest.on("unpublish", (sessionId) => this.publishEnded(sessionId));
     ingest.on("videoTag", (sessionId, tag) => {
+      this.videoArrived(sessionId);
       // Cheap check of the first two bytes before parsing: sequence headers only.
       const info = describeSequenceHeader(tag.data);
       if (info) this.videoInfo(sessionId, info);
@@ -116,9 +127,11 @@ export class DroneRegistry extends EventEmitter<RegistryEvents> {
       state: "live",
       since: wasLive ? entry.status.since : this.now().toISOString(),
       sessionId,
+      stalledSince: null,
       video: null,
     };
     entry.metadataSize = undefined;
+    entry.lastVideoAt = this.now().getTime();
     this.logger.info({ droneId, sessionId, replacedSessionId: previous ?? undefined }, "drone live");
     this.emitUpdate(entry);
   }
@@ -133,6 +146,7 @@ export class DroneRegistry extends EventEmitter<RegistryEvents> {
       state: "offline",
       since: this.now().toISOString(),
       sessionId: null,
+      stalledSince: null,
       video: null,
     };
     this.logger.info({ droneId, sessionId }, "drone offline");
@@ -143,6 +157,33 @@ export class DroneRegistry extends EventEmitter<RegistryEvents> {
     const entry = this.drones.get(droneId);
     if (!entry || entry.status.viewerCount === viewerCount) return;
     entry.status = { ...entry.status, viewerCount };
+    this.emitUpdate(entry);
+  }
+
+  /**
+   * Marks live drones whose publisher has sent no video for PUBLISHER_STALL_MS. Called
+   * periodically by the composition root; recovery is reported on the next video tag.
+   */
+  checkStalls(): void {
+    const now = this.now().getTime();
+    for (const entry of this.drones.values()) {
+      const { state, stalledSince, id, sessionId } = entry.status;
+      if (state !== "live" || stalledSince !== null || now - entry.lastVideoAt < PUBLISHER_STALL_MS) continue;
+      entry.status = { ...entry.status, stalledSince: new Date(entry.lastVideoAt).toISOString() };
+      this.logger.info({ droneId: id, sessionId }, "publisher stalled: no video");
+      this.emitUpdate(entry);
+    }
+  }
+
+  private videoArrived(sessionId: string): void {
+    const entry = this.entryForSession(sessionId);
+    if (!entry) return;
+    const now = this.now().getTime();
+    const gapMs = now - entry.lastVideoAt;
+    entry.lastVideoAt = now;
+    if (entry.status.stalledSince === null) return;
+    entry.status = { ...entry.status, stalledSince: null };
+    this.logger.info({ droneId: entry.status.id, sessionId, gapMs }, "publisher resumed video");
     this.emitUpdate(entry);
   }
 

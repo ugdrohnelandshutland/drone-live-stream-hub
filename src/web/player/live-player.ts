@@ -9,7 +9,7 @@ export type PlayerStatus =
   | "connecting" // WebSocket opening
   | "waiting" // connected, no picture yet (drone offline or waiting for a keyframe)
   | "playing"
-  | "stalled" // was playing, no new frame for a while
+  | "stalled" // was playing, no new frame for a while; the last picture stays
   | "offline" // server reported drone-offline, reconnecting
   | "error" // network/player error, retrying with backoff
   | "unknown-drone"
@@ -192,6 +192,8 @@ export class LivePlayer {
   private shownFrame = false;
   private hiddenSince: number | undefined;
   private destroyed = false;
+  /** The hub reports that the drone itself sends no video (DroneStatus.stalledSince). */
+  private sourceStalled = false;
   private removeFrameFallback: (() => void) | undefined;
 
   constructor(private readonly options: LivePlayerOptions) {}
@@ -228,6 +230,17 @@ export class LivePlayer {
     if (this.destroyed) return;
     window.clearTimeout(this.restartTimer);
     this.restartTimer = window.setTimeout(() => this.createPlayer(), delayMs);
+  }
+
+  /**
+   * While the drone itself sends nothing, a stalled picture is not restarted: a new connection
+   * cannot bring frames the hub does not have, and the restart would replace the last picture
+   * with an empty one. Restart checks begin afresh when the drone sends again.
+   */
+  setSourceStalled(stalled: boolean): void {
+    if (stalled === this.sourceStalled) return;
+    this.sourceStalled = stalled;
+    if (!stalled && this.status === "stalled") this.lastFrameAt = performance.now();
   }
 
   private setStatus(status: PlayerStatus): void {
@@ -384,7 +397,7 @@ export class LivePlayer {
     const sinceFrame = performance.now() - this.lastFrameAt;
     const { stallAfterMs, restartAfterMs } = STALL_LIMITS[this.mode];
     if (this.status === "playing" && sinceFrame > stallAfterMs) this.setStatus("stalled");
-    if (this.status === "stalled" && sinceFrame > restartAfterMs) {
+    if (this.status === "stalled" && !this.sourceStalled && sinceFrame > restartAfterMs) {
       this.lastFrameAt = performance.now(); // one restart per stall period
       this.restart(0);
     }

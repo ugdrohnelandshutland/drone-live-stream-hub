@@ -58,6 +58,7 @@ describe("DroneRegistry", () => {
         state: "offline",
         since: null,
         sessionId: null,
+        stalledSince: null,
         viewerCount: 0,
         video: null,
       },
@@ -67,6 +68,7 @@ describe("DroneRegistry", () => {
         state: "offline",
         since: null,
         sessionId: null,
+        stalledSince: null,
         viewerCount: 0,
         video: null,
       },
@@ -138,6 +140,37 @@ describe("DroneRegistry", () => {
     ingest.metadata("s2", METADATA);
     ingest.video("s2", HEVC_SEQ);
     expect(registry.get("m30t-02")?.video).toEqual({ codec: "hevc", width: 1280, height: 720 });
+  });
+
+  it("reports a publisher that stops sending video, and its recovery", () => {
+    const { ingest, registry, updates, setClock } = setup();
+    ingest.publish("m30t-01", "s1");
+    ingest.video("s1", AVC_SEQ);
+    setClock("2026-10-09T10:00:00.900Z");
+    registry.checkStalls();
+    expect(registry.get("m30t-01")?.stalledSince).toBeNull();
+
+    setClock("2026-10-09T10:00:01.000Z");
+    registry.checkStalls();
+    registry.checkStalls();
+    // Since the last video tag, not since the check.
+    expect(registry.get("m30t-01")?.stalledSince).toBe("2026-10-09T10:00:00.000Z");
+    expect(registry.get("m30t-02")?.stalledSince).toBeNull(); // offline drones never stall
+
+    setClock("2026-10-09T10:00:04.000Z");
+    ingest.video("s1", Buffer.from([0x27, 1, 0, 0, 0, 0]));
+    expect(registry.get("m30t-01")?.stalledSince).toBeNull();
+    expect(updates.map((u) => u.stalledSince)).toEqual([null, null, "2026-10-09T10:00:00.000Z", null]);
+  });
+
+  it("counts a publish without any video as stalled and clears the flag when it ends", () => {
+    const { ingest, registry, setClock } = setup();
+    ingest.publish("m30t-01", "s1");
+    setClock("2026-10-09T10:00:02Z");
+    registry.checkStalls();
+    expect(registry.get("m30t-01")?.stalledSince).toBe("2026-10-09T10:00:00.000Z");
+    ingest.unpublish("s1");
+    expect(registry.get("m30t-01")).toMatchObject({ state: "offline", stalledSince: null });
   });
 
   it("tracks viewer counts and emits only on change", () => {

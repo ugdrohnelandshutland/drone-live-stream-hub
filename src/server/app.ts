@@ -44,6 +44,8 @@ export interface ServiceOptions {
 }
 
 export const RTMP_APP_NAME = "live";
+/** How often the registry checks for publishers that stopped sending video. */
+const STALL_CHECK_MS = 250;
 
 /**
  * `web/` next to the bundled server (Windows package), otherwise <repo>/dist/web, both
@@ -241,6 +243,8 @@ export function createService(config: AppConfig, logger: Logger, options: Servic
     },
   });
 
+  let stallWatch: NodeJS.Timeout | undefined;
+
   return {
     info,
     get rtmpPort() {
@@ -258,8 +262,10 @@ export function createService(config: AppConfig, logger: Logger, options: Servic
       await ingest.start();
       await delivery.start();
       diagnostics.start();
+      stallWatch = setInterval(() => registry.checkStalls(), STALL_CHECK_MS);
     },
     async stop() {
+      clearInterval(stallWatch);
       diagnostics.stop();
       await ingest.stop();
       await captures?.stop();

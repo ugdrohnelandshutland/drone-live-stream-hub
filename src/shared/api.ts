@@ -17,6 +17,12 @@ export interface DroneStatus {
   /** ISO time of the last state change; null if the drone has not been live since the service started. */
   since: string | null;
   sessionId: string | null;
+  /**
+   * Live, but the publisher has sent no video for a while (the RC drops frames or its link
+   * stalls): ISO time of its last video tag. null while frames arrive and while offline.
+   * Lets the web UI tell "the drone sends nothing" from "this device's connection is weak".
+   */
+  stalledSince: string | null;
   viewerCount: number;
   video: DroneVideoInfo | null;
 }

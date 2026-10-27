@@ -8,6 +8,8 @@ interface LiveVideoProps {
   /** Must match the URL: "keyframes" for a `?keyframes=1` stream. */
   mode?: StreamMode | undefined;
   tuning?: Partial<LatencyTuning> | undefined;
+  /** The hub reports that the drone sends no video (DroneStatus.stalledSince). */
+  sourceStalled?: boolean | undefined;
   onStatus: (status: PlayerStatus) => void;
   /** Raw WebSocket events of the player (recording). */
   onStreamEvent?: ((event: StreamEvent) => void) | undefined;
@@ -20,9 +22,10 @@ interface LiveVideoProps {
  * A muted live <video> with its own player. Owning the element here keeps element and player
  * in step: a new element always gets a new player.
  */
-export function LiveVideo({ url, mode, tuning, onStatus, onStreamEvent, ref, className }: LiveVideoProps) {
+export function LiveVideo(props: LiveVideoProps) {
+  const { url, mode, tuning, sourceStalled, onStatus, onStreamEvent, ref, className } = props;
   const [video, setVideo] = useState<HTMLVideoElement | null>(null);
-  useLivePlayer(video, { url, mode, tuning, onStatus, onStreamEvent });
+  useLivePlayer(video, { url, mode, tuning, sourceStalled, onStatus, onStreamEvent });
 
   const attach = useCallback(
     (node: HTMLVideoElement | null) => {

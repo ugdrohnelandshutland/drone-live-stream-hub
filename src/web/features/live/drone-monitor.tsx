@@ -19,8 +19,10 @@ import { LiveVideo } from "../../player/live-video";
 import {
   describeStatus,
   LIVE_WITHOUT_PREVIEW,
+  noPictureYetView,
   offlineView,
   pausedView,
+  stalledView,
   type StatusView,
 } from "../../player/player-status";
 import { useSettledStatus } from "../../player/use-settled-status";
@@ -60,6 +62,7 @@ export function DroneMonitor({ drone, slot, focused, dataSaver, paused, options 
   const status = useSettledStatus(playerStatus);
   const [toast, showToast] = useToast();
   const live = drone.state === "live";
+  const droneStalled = live && drone.stalledSince !== null;
   useExitFullscreenWhenUnfocused(rootRef, focused);
   const fullscreen = useIsFullscreen(rootRef) && focused;
   const strip = useFullscreenStrip(fullscreen);
@@ -73,7 +76,7 @@ export function DroneMonitor({ drone, slot, focused, dataSaver, paused, options 
   const mode = !focused && dataSaver ? "keyframes" : "full";
   const view = paused
     ? pausedView()
-    : monitorView({ live, focused, previews: options.previews, status, droneId: drone.id });
+    : monitorView({ live, droneStalled, focused, previews: options.previews, status, droneId: drone.id });
 
   return (
     <li
@@ -104,6 +107,7 @@ export function DroneMonitor({ drone, slot, focused, dataSaver, paused, options 
           url={runPlayer ? liveStreamUrl(drone.id, mode) : undefined}
           mode={mode}
           tuning={options.tuning}
+          sourceStalled={droneStalled}
           onStatus={setPlayerStatus}
           onStreamEvent={recording.onStreamEvent}
         />
@@ -174,16 +178,23 @@ function useExitFullscreenWhenUnfocused(rootRef: RefObject<HTMLLIElement | null>
 
 function monitorView(input: {
   live: boolean;
+  /** Live, but the hub gets no video from the drone (DroneStatus.stalledSince). */
+  droneStalled: boolean;
   focused: boolean;
   previews: boolean;
   status: PlayerStatus;
   droneId: string;
 }): StatusView {
-  const { live, focused, previews, status, droneId } = input;
+  const { live, droneStalled, focused, previews, status, droneId } = input;
   if (status === "playing") return describeStatus(status, droneId);
   // Same wording in both layouts while the registry reports the drone offline.
   if (!live) return offlineView(focused ? "Warte auf die Drohne …" : "");
   if (!focused && !previews) return LIVE_WITHOUT_PREVIEW;
+  // "Kein Signal" only for a drone that is gone; while it is live, name the cause.
+  const cause = droneStalled ? "drone" : "connection";
+  if (status === "stalled") return stalledView(cause, focused);
+  if (status === "connecting" || status === "waiting")
+    return noPictureYetView(droneStalled ? cause : undefined, focused);
   return describeStatus(status, droneId);
 }
 

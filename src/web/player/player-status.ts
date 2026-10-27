@@ -14,6 +14,8 @@ export interface StatusView {
   label: string;
   /** Overlay title and detail; undefined while a picture is shown. */
   overlay: { title: string; detail: string } | undefined;
+  /** A note over a picture that stays visible (the last one, while no new frame arrives). */
+  hint?: { title: string; detail: string };
   /** Show without the settle delay (permanent conditions, not short interruptions). */
   immediate: boolean;
 }
@@ -97,5 +99,38 @@ export function pausedView(): StatusView {
     label: t.paused.label,
     overlay: { title: t.paused.title, detail: "" },
     immediate: true,
+  };
+}
+
+/**
+ * Why a live drone shows no new picture, from the hub's view (DroneStatus.stalledSince):
+ * "drone" — the drone sends nothing (RC drops frames, radio link); "connection" — the drone
+ * sends, but this device does not receive it fast enough (weak Wi-Fi).
+ */
+export type StallCause = "drone" | "connection";
+
+/**
+ * A live drone whose picture stopped: the last picture stays with a note on the cause.
+ * "Kein Signal" is kept for a drone that is gone; the hub reports that after 10 s without data.
+ */
+export function stalledView(cause: StallCause, withDetail: boolean): StatusView {
+  const text = t.stall[cause];
+  return {
+    tone: cause === "drone" ? "nosignal" : "pending",
+    label: text.label,
+    overlay: undefined,
+    hint: { title: text.title, detail: withDetail ? text.detail : "" },
+    immediate: false,
+  };
+}
+
+/** Live, but no picture yet (connecting, or the first keyframe has not arrived). */
+export function noPictureYetView(cause: StallCause | undefined, withDetail: boolean): StatusView {
+  if (cause !== "drone") return describeStatus("connecting", "");
+  return {
+    tone: "nosignal",
+    label: t.stall.drone.label,
+    overlay: { title: t.stall.drone.title, detail: withDetail ? t.stall.drone.detail : "" },
+    immediate: false,
   };
 }
