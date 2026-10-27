@@ -12,6 +12,16 @@ export interface Release {
 
 export const changelog: readonly Release[] = [
   {
+    version: "0.10.0-beta.2",
+    date: "2026-10-27",
+    changes: [
+      "Testversion für den nächsten Feldtest.",
+      "Setzt die Drohne kurz aus, bleibt das letzte Bild stehen – mit dem Hinweis „Drohne sendet gerade keine Bilder“ statt „Kein Signal“.",
+      "Ist nur die Verbindung des eigenen Geräts zu langsam, steht dort „Schwache Verbindung“ – die Drohne sendet dann normal weiter.",
+      "„Kein Signal“ erscheint erst, wenn die Drohne wirklich getrennt ist (nach 10 s ohne Daten).",
+    ],
+  },
+  {
     version: "0.10.0-beta.1",
     date: "2026-10-26",
     changes: [
