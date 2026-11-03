@@ -336,7 +336,7 @@ export class StreamDiagnostics {
           : undefined;
       session.video = describeFormat(tag.data, info.codec, info.payloadOffset);
       session.log.info(
-        { ...session.video, enhanced: info.enhanced, timestamp: tag.timestamp, changed },
+        { ...videoLogFields(session.video), enhanced: info.enhanced, timestamp: tag.timestamp, changed },
         changed ? "video sequence header changed" : "video sequence header received",
       );
       const record = this.drones.get(session.droneId);
@@ -501,7 +501,7 @@ export class StreamDiagnostics {
       const m = this.measure(session);
       session.log.info(
         {
-          ...session.video,
+          ...videoLogFields(session.video),
           fps: Math.round((session.logWindow.frames / seconds) * 10) / 10,
           kbps: Math.round((session.logWindow.bytes * 8) / seconds / 1000),
           keyframeIntervalMs: m.keyframeIntervalMs?.avg,
@@ -539,6 +539,16 @@ function hostOf(remoteAddress: string): string {
   if (bracketed?.[1]) return bracketed[1];
   const index = remoteAddress.lastIndexOf(":");
   return index > 0 ? remoteAddress.slice(0, index) : remoteAddress;
+}
+
+/**
+ * The video format for a log line. The H.264 level goes in as `codecLevel`: under `level` it
+ * would overwrite pino's log level (a line showed `"level":"4.0"` instead of info).
+ */
+function videoLogFields(video: VideoFormatInfo | null): Record<string, unknown> {
+  if (!video) return {};
+  const { level, ...rest } = video;
+  return { ...rest, codecLevel: level };
 }
 
 function describeFormat(data: Buffer, codec: string, payloadOffset: number): VideoFormatInfo {

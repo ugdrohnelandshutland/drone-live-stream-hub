@@ -13,7 +13,6 @@ Diese Anleitung ist für den Einsatz-PC. Sie liegt dem Release-ZIP auch als `REA
   sind in Ordnung, eine andere Hauptversion (z. B. 26) nur zusammen mit einem Release, das sie
   unterstützt. Der Service-Wrapper ist im Paket enthalten.
 - Administratorrechte für die Installation (nicht für den Betrieb).
-- Das Einsatz-WLAN muss in Windows ein **privates** Netzwerk sein (siehe unten).
 
 ## Installieren oder aktualisieren
 
@@ -35,8 +34,8 @@ Das Skript
 - legt `config\drones.json` aus dem Beispiel an, falls sie fehlt, und prüft sie,
 - registriert den Windows-Dienst **DroneLiveStreamHub** (startet automatisch beim Hochfahren,
   läuft unter dem eingeschränkten Konto `LocalService`),
-- legt eingehende Firewall-Regeln für TCP 1935 (RTMP) und 8080 (Web) an, **nur für private
-  Netzwerke**,
+- legt eingehende Firewall-Regeln für TCP 1935 (RTMP) und 8080 (Web) an, für **alle
+  Netzwerkprofile** (privat, öffentlich, Domäne; siehe unten),
 - startet den Dienst und prüft, ob er antwortet.
 
 Ein erneuter Aufruf mit einem neueren Paket aktualisiert das Programm. `config\drones.json`,
@@ -82,15 +81,29 @@ Livestream → RTMP → `rtmp://<IP des Einsatz-PCs>:1935/live/<Drohnen-ID>`, z.
 - Eine Drohne, z. B. für den Kiosk-Touchscreen:
   `http://<IP des Einsatz-PCs>:8080/drone/m30t-01?kiosk`
 
-## Privates Netzwerk
+## Firewall und Netzwerkprofil
 
-Windows blockiert den Dienst in Netzwerken, die als **Öffentlich** eingestuft sind. Das
-Installationsskript warnt davor. So wird das Einsatz-WLAN umgestellt (Administrator-PowerShell):
+Die Firewall-Regeln gelten für alle Netzwerkprofile und nur für das `node.exe` des Dienstes. Damit
+funktioniert der Empfang auch dann, wenn Windows das Einsatz-WLAN als **Öffentlich** einstuft, zum
+Beispiel nach einem Wechsel von Router oder Access Point oder in einem Netz ohne Standard-Gateway
+(„Nicht identifiziertes Netzwerk“). Vorher meldete Pilot 2 in diesem Fall „Starten des
+Live-Streams fehlgeschlagen“.
+
+Die Ports 1935 und 8080 sind damit auch in fremden öffentlichen WLANs erreichbar. Der Feld-PC
+sollte deshalb nur mit dem Einsatz-WLAN verbunden sein.
+
+## Energiesparen
+
+Geht der Feld-PC in den Standby, laufen keine Streams mehr (so beim ersten Feldtest). Standby und
+Ruhezustand im Netzbetrieb abschalten (Administrator-PowerShell):
 
 ```powershell
-Get-NetConnectionProfile                       # zeigt InterfaceAlias und NetworkCategory
-Set-NetConnectionProfile -InterfaceAlias "WLAN" -NetworkCategory Private
+powercfg /change standby-timeout-ac 0
+powercfg /change hibernate-timeout-ac 0
 ```
+
+Den Bildschirm darf Windows weiterhin abschalten. Im Akkubetrieb gelten eigene Werte
+(`standby-timeout-dc`); der Feld-PC sollte im Einsatz am Netz hängen.
 
 ## Logs und Status
 

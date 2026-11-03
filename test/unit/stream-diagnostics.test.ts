@@ -1,3 +1,5 @@
+import { Writable } from "node:stream";
+import { pino } from "pino";
 import { describe, expect, it } from "vitest";
 import { encodeAmf0String } from "../../src/server/flv/amf0.js";
 import { avcLevelName, avcProfileName } from "../../src/shared/flv/avc.js";
@@ -45,12 +47,12 @@ function metadata(fields: Record<string, number | string>): Buffer {
   return Buffer.concat(parts);
 }
 
-function setup() {
+function setup(log = logger) {
   let clock = 1_000_000;
   const ingest = new FakeIngest();
   const registry = new DroneRegistry([{ id: "m30t-01", name: "Drohne 1" }], logger, () => new Date(clock));
   registry.attach(ingest);
-  const diagnostics = new StreamDiagnostics({ ingest, registry, logger, now: () => clock });
+  const diagnostics = new StreamDiagnostics({ ingest, registry, logger: log, now: () => clock });
   return {
     ingest,
     diagnostics,
@@ -201,6 +203,22 @@ describe("StreamDiagnostics", () => {
       "3 malformed frames in 60 s, last: trailing-bytes at byte 6 of 8 in an inter frame",
       "malformed NAL units: overrun at byte 6 of 11 in an inter frame",
     ]);
+  });
+
+  it("logs the H.264 level as codecLevel, never as the log level", () => {
+    const lines: Record<string, unknown>[] = [];
+    const sink = new Writable({
+      write(chunk: Buffer, _encoding, done) {
+        lines.push(JSON.parse(chunk.toString()) as Record<string, unknown>);
+        done();
+      },
+    });
+    const t = setup(pino({ level: "info" }, sink));
+    t.ingest.publish("m30t-01", "s1");
+    t.ingest.video("s1", AVC_SEQ);
+
+    const line = lines.find((l) => l["msg"] === "video sequence header received");
+    expect(line).toMatchObject({ level: 30, codecLevel: "4.0", profile: "High" });
   });
 
   it("lists rejected stream keys and nothing for drones that never published", () => {

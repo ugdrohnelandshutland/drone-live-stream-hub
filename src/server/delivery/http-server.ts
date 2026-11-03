@@ -209,7 +209,18 @@ export class DeliveryServer {
               ? "abort"
               : "normal",
         );
-        log.info({ code, viewers: channel.viewerCount }, "viewer disconnected");
+        // `code` is what the socket ended with: 1006 when a close we sent (e.g. 4008) was never
+        // answered, so the code we sent is logged as well.
+        log.info(
+          {
+            code,
+            ...(viewer.closedWith !== undefined &&
+              viewer.closedWith !== code && { sentCode: viewer.closedWith }),
+            ...(viewer.timedOut && { timedOut: true }),
+            viewers: channel.viewerCount,
+          },
+          "viewer disconnected",
+        );
       });
       channel.addViewer(viewer, mode);
       log.info({ live: channel.live, viewers: channel.viewerCount }, "viewer connected");
