@@ -19,6 +19,10 @@ export interface ViewerMetrics {
   resolutions: string[];
   /** Video timestamps going backwards within one connection (must stay 0). */
   timestampRegressions: number;
+  /** Video timestamps less than 10 ms after the previous one (0 ms: same picture time). */
+  bunchedTimestamps: number;
+  /** Coded frames without any NAL unit. */
+  emptyFrames: number;
 }
 
 export interface ReconnectingViewerOptions {
@@ -44,6 +48,8 @@ export class ReconnectingViewer extends EventEmitter {
     maxGapMs: 0,
     resolutions: [],
     timestampRegressions: 0,
+    bunchedTimestamps: 0,
+    emptyFrames: 0,
   };
   private viewer: FlvViewer | undefined;
   private timer: NodeJS.Timeout | undefined;
@@ -101,6 +107,11 @@ export class ReconnectingViewer extends EventEmitter {
       }
       this.metrics.videoTags++;
       if (tag.timestamp < lastTimestamp) this.metrics.timestampRegressions++;
+      const delta = tag.timestamp - lastTimestamp;
+      if (lastTimestamp >= 0 && delta > 0 && delta < 10) this.metrics.bunchedTimestamps++;
+      if (info?.packetType === "coded-frame" && tag.data.length - info.payloadOffset <= 4) {
+        this.metrics.emptyFrames++;
+      }
       lastTimestamp = tag.timestamp;
       if (lastVideoAt !== undefined) {
         const gap = tag.receivedAt - lastVideoAt;

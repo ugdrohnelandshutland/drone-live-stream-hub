@@ -15,6 +15,7 @@ import { Api } from "./delivery/api.js";
 import { DeliveryServer } from "./delivery/http-server.js";
 import { LiveHub } from "./delivery/live-hub.js";
 import { NmsIngestAdapter } from "./ingest/nms-adapter.js";
+import { NormalizedIngest } from "./ingest/normalized-ingest.js";
 import { StreamCapture } from "./diagnostics/stream-capture.js";
 import { StreamDiagnostics } from "./diagnostics/stream-diagnostics.js";
 import type { Logger } from "./logger.js";
@@ -103,9 +104,12 @@ export function createService(config: AppConfig, logger: Logger, options: Servic
     events.add({ kind: "publish-rejected", detail: streamKey, address: remoteAddress }),
   );
 
+  // Viewers get evened-out timestamps and no empty frames (ADR 0013); everything else
+  // below keeps observing the stream as the publisher sent it.
+  const delivered = new NormalizedIngest(ingest, logger.child({ module: "normalize" }));
   const hub = new LiveHub(
     config.drones.map((d) => d.id),
-    ingest,
+    delivered,
     {
       maxGopBytes: options.maxGopBytes ?? 16 * 1024 * 1024,
       softBufferBytes: options.softBufferBytes ?? 1024 * 1024,

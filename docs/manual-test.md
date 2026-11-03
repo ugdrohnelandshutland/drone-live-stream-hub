@@ -35,6 +35,9 @@ Devices: Chrome on Android tablet · Chrome on iPad (iPadOS ≥ 17.1) · Chrome 
 
 - [ ] Picture appears within ~1 s; name and "Live" shown
 - [ ] `?stats`: note latency (avg / p95): ______
+- [ ] Smooth movement with `--profile pilot2-real` (uneven timestamps, ADR 0013): pan or switch
+      cameras and watch the dropped frames in `?stats` (dropped / total) — they stay low. **iPad and Android** in
+      particular (only Windows Chrome was measured)
 - [ ] Drone stops → "Kein Signal" after ~1 s; drone back → picture returns by itself
 - [ ] Drone pauses (`stall` in the ingest chaos proxy, < 10 s): the last picture stays with
       "Drohne sendet gerade keine Bilder" at the bottom edge and "Bild steht" in the strip; no
@@ -134,5 +137,7 @@ Open `/diagnose` on a laptop while the RC streams, then:
 - [ ] Note codec, profile/level, resolution, fps, bitrate, keyframe spacing, B-frames, audio.
 - [ ] Switch wide → zoom → thermal → wide on the RC: each switch appears under "Ereignisse";
       the single view resumes each time.
+- [ ] Pan the camera slowly in the single view with `?stats`: movement is smooth and dropped frames
+      stays low (ADR 0013); note it per device.
 - [ ] "JSON speichern" after each camera mode and attach the files to the test notes; the
       simulator profile (`src/sim/profiles.ts`) is adjusted from them.

@@ -17,7 +17,7 @@ DJI M30T ──(O3 radio)──> DJI RC Plus (Pilot 2) ──(RTMP over Wi-Fi)�
 ```
 
 - Each RC Plus pushes RTMP to `rtmp://<field-pc-ip>:1935/live/<droneId>`, e.g. `m30t-01`.
-- The service **forwards video unchanged** (no transcoding, no server-side remux). The browser plays the FLV stream with **mpegts.js** via Media Source Extensions.
+- The service **forwards video unchanged** (no transcoding, no server-side remux; only timestamps are evened out, ADR 0013). The browser plays the FLV stream with **mpegts.js** via Media Source Extensions.
 - Works fully **offline**. No external server software (no MediaMTX, no OBS, no nginx). **Open-source libraries are allowed.**
 
 ### Goals of the first release
@@ -107,7 +107,7 @@ One Node.js process with four modules. The RTMP library is used **only for inges
 1. FLV file header (9 bytes, video flag only) + `PreviousTagSize0` (4 bytes, zero).
 2. Cached `onMetaData` tag (if any).
 3. Cached video sequence header.
-4. Cached GOP (from the last keyframe), with **timestamps kept as received**.
+4. Cached GOP (from the last keyframe). Video timestamps are evened out and empty frames dropped (ADR 0013); tag bytes stay as received.
 5. Live video tags as they arrive.
 
 Each FLV tag must be followed by its `PreviousTagSize`. Every WebSocket message contains whole tags only.

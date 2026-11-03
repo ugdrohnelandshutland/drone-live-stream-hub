@@ -372,6 +372,8 @@ export class SimulatedDrone extends EventEmitter {
       (chunk) => pusher.stdin.write(chunk),
       this.options.audio ?? false,
       1000 / this.options.profile.fps,
+      Date.now,
+      this.options.profile.quirks,
     );
     await this.spawnEncoder();
   }

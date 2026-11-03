@@ -17,6 +17,21 @@ export interface StreamProfile extends Resolution {
   zoom: Resolution;
   /** Output size of the `thermal` camera (M30T thermal sensor is 640×512). */
   thermal: Resolution;
+  /** How Pilot 2 packs the stream beyond the encoder settings (inline switch mode only). */
+  quirks?: StreamQuirks;
+}
+
+/**
+ * Stream properties of a real RC Plus that ffmpeg does not produce, added by FlvSplicer.
+ * Synthetic: no content from real captures (GPS, serial numbers) goes into the simulator.
+ */
+export interface StreamQuirks {
+  /** Each picture timestamp is moved by up to ± this many ms (kept in order). */
+  timestampJitterMs?: number;
+  /** A separate video tag with only an SEI NAL unit before each picture, same timestamp. */
+  seiOnlyTags?: boolean;
+  /** About this often, a coded frame without any NAL unit (9-byte tag). */
+  emptyTagIntervalMs?: number;
 }
 
 export const PROFILES: Record<string, StreamProfile> = {
@@ -34,7 +49,7 @@ export const PROFILES: Record<string, StreamProfile> = {
    * Values measured from two real RC Plus in the first field test (2026-10-26): coded height
    * 1088, zoom 1440×1088, thermal 1080×720, about 2 Mbit/s, a keyframe every second. Not
    * reproduced: Pilot 2 repeats the sequence header before every keyframe (ffmpeg drops
-   * identical repeats when it pushes RTMP), and the rate of 66–73 video tags per second.
+   * identical repeats when it pushes RTMP).
    * Pauses of 1–4.5 s in the stream come from the `dropout` scenario action.
    */
   "pilot2-real": {
@@ -46,6 +61,9 @@ export const PROFILES: Record<string, StreamProfile> = {
     bitrateKbps: 2000,
     zoom: { width: 1440, height: 1088 },
     thermal: { width: 1080, height: 720 },
+    // Second field test (2026-11-03): pictures stamped 2–37 ms apart, an SEI-only tag per
+    // picture, an empty frame every 4–5 s.
+    quirks: { timestampJitterMs: 15, seiOnlyTags: true, emptyTagIntervalMs: 4500 },
   },
   "720p30": {
     name: "720p30",

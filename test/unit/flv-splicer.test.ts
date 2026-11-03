@@ -55,6 +55,38 @@ describe("FlvSplicer", () => {
     ]);
   });
 
+  it("adds Pilot 2 quirks: uneven timestamps in order, SEI-only tags and empty frames", () => {
+    const chunks: Buffer[] = [];
+    const randoms = [0, 1, 0, 1, 0.5];
+    const splicer = new FlvSplicer(
+      (c) => (chunks.push(c), true),
+      false,
+      33,
+      () => 0,
+      { timestampJitterMs: 15, seiOnlyTags: true, emptyTagIntervalMs: 100 },
+      () => randoms.shift() ?? 0.5,
+    );
+    splicer.beginSegment();
+    splicer.push(
+      file([
+        sequenceHeader(1),
+        keyframe(0),
+        interframe(33),
+        interframe(66),
+        interframe(100),
+        interframe(133),
+      ]),
+    );
+
+    const tags = new FlvStreamParser().push(Buffer.concat(chunks));
+    const pictures = tags.filter((t) => t.data.length > 40).map((t) => t.timestamp);
+    expect(pictures).toEqual([0, 48, 51, 115, 133]);
+    expect(tags.filter((t) => t.data.length === 32).length).toBe(5); // SEI-only, one per picture
+    expect(tags.filter((t) => t.data.length === 9).map((t) => t.timestamp)).toEqual([115]);
+    const all = tags.map((t) => t.timestamp);
+    expect(all.every((ts, i) => i === 0 || ts >= all[i - 1]!)).toBe(true);
+  });
+
   it("passes the destination's backpressure through", () => {
     const splicer = new FlvSplicer(() => false, false, 33);
     expect(splicer.push(file([keyframe(0)]))).toBe(false);
