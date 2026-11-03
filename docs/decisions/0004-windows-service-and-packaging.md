@@ -50,9 +50,11 @@ Service Control Manager (SCM). Something has to sit in between.
   itself if it dies.
 - **Install location:** `C:\Program Files\DroneLiveStreamHub` by default. Not a folder that
   normal users can write to, because the service executes files from it.
-- **Firewall:** inbound TCP rules for the configured RTMP and HTTP ports, **private profile
-  only**, restricted to the bundled `node.exe`. The installer warns about networks classified as
-  public instead of changing them.
+- **Firewall:** inbound TCP rules for the configured RTMP and HTTP ports, restricted to the
+  bundled `node.exe`. _Amended 2026-11-03 (product owner):_ for **all network profiles**, no
+  longer private only. In the field Windows classified the Wi-Fi as public again and the RC Plus
+  could not connect ("Starten des Live-Streams fehlgeschlagen"); the installer no longer warns
+  about public networks. Trade-off: the ports are also open in foreign public networks.
 - **Distribution:** one ZIP (~34 MB) with `install.cmd` (double-click, asks for elevation).
   The ZIP is written by a small own writer (`scripts/lib/zip.ts`) so packaging needs no external
   tools.

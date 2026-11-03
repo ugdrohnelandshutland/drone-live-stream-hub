@@ -13,7 +13,7 @@
   - Registers the service "DroneLiveStreamHub" (automatic start at boot, runs as
     LocalService, no admin rights at runtime). shawl wraps node.exe, restarts it after a
     crash and writes the logs with rotation to <install dir>\logs.
-  - Creates inbound firewall rules for the RTMP and HTTP ports (private networks only).
+  - Creates inbound firewall rules for the RTMP and HTTP ports (all network profiles).
   - Starts the service and checks /healthz.
 
 .PARAMETER InstallDir
@@ -50,7 +50,6 @@ $ExitConfigError = 2
 $RequiredNodeMajor = 24
 
 function Write-Step([string]$Text) { Write-Host "==> $Text" -ForegroundColor Cyan }
-function Write-Warn([string]$Text) { Write-Host "WARNING: $Text" -ForegroundColor Yellow }
 
 # The installed Node.js the service runs with; throws with download advice if it is unsuitable.
 function Find-Node([string]$Requested) {
@@ -200,20 +199,16 @@ try {
   # If the wrapper itself dies, Windows restarts it.
   & sc.exe failure $ServiceName reset= 86400 actions= restart/5000/restart/10000/restart/30000 | Out-Null
 
-  # 6. Firewall: inbound TCP for the installed node.exe on both ports, private network profile
-  #    only. The rule allows that node.exe, so any Node.js program on this PC could use them.
-  Write-Step "Firewall rules for TCP $rtmpPort (RTMP) and $httpPort (web), private networks"
+  # 6. Firewall: inbound TCP for the installed node.exe on both ports, in every network profile:
+  #    Windows may classify the field Wi-Fi as public again (other router, no gateway), and then
+  #    the RC Plus could not connect. The rule allows that node.exe, so any Node.js program on
+  #    this PC could use the ports.
+  Write-Step "Firewall rules for TCP $rtmpPort (RTMP) and $httpPort (web), all network profiles"
   Get-NetFirewallRule -Group $FirewallGroup -ErrorAction SilentlyContinue | Remove-NetFirewallRule
   New-NetFirewallRule -DisplayName "$DisplayName - RTMP ingest (TCP $rtmpPort)" -Group $FirewallGroup `
-    -Direction Inbound -Action Allow -Protocol TCP -LocalPort $rtmpPort -Profile Private -Program $nodeExe | Out-Null
+    -Direction Inbound -Action Allow -Protocol TCP -LocalPort $rtmpPort -Profile Any -Program $nodeExe | Out-Null
   New-NetFirewallRule -DisplayName "$DisplayName - Web and video (TCP $httpPort)" -Group $FirewallGroup `
-    -Direction Inbound -Action Allow -Protocol TCP -LocalPort $httpPort -Profile Private -Program $nodeExe | Out-Null
-  $public = @(Get-NetConnectionProfile | Where-Object { $_.NetworkCategory -eq 'Public' })
-  foreach ($network in $public) {
-    $message = "Network '$($network.Name)' ($($network.InterfaceAlias)) is set to Public: drones and tablets cannot connect through it. " +
-      "If this is the field Wi-Fi, run: Set-NetConnectionProfile -InterfaceAlias '$($network.InterfaceAlias)' -NetworkCategory Private"
-    Write-Warn $message
-  }
+    -Direction Inbound -Action Allow -Protocol TCP -LocalPort $httpPort -Profile Any -Program $nodeExe | Out-Null
 
   # 7. Start and check.
   if ($NoStart) {

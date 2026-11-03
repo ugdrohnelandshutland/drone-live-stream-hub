@@ -113,7 +113,7 @@ Once per release, on a Windows 10/11 PC, with the ZIP from `npm run package:wind
       with "is running" and prints the LAN addresses.
 - [ ] `Get-Service DroneLiveStreamHub` → Running, start type Automatic; in `services.msc` the
       account is "Lokaler Dienst" / "Local Service".
-- [ ] `wf.msc`: two inbound rules in group "Drone Live Stream Hub", profile Private.
+- [ ] `wf.msc`: two inbound rules in group "Drone Live Stream Hub", profile All (ADR 0004).
 - [ ] From another device in the Wi-Fi: the overview loads; simulated drones appear and play
       (on a dev PC: `npm run sim -- --host <field PC IP> --drones 3`).
 - [ ] `logs\service_rCURRENT.log` contains "HTTP server listening"; `wrapper_rCURRENT.log`

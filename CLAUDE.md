@@ -197,7 +197,7 @@ ffmpeg is a **development and test tool only** (must be on PATH on the dev machi
 
 - `scripts/install-windows.ps1` (run as administrator):
   - Registers the service to start automatically at boot (evaluate `node-windows` or a Node.js Single Executable Application with a service wrapper; document the choice as an ADR).
-  - Creates inbound Windows Firewall rules for TCP 1935 and 8080 (`New-NetFirewallRule`), private network profile only.
+  - Creates inbound Windows Firewall rules for TCP 1935 and 8080 (`New-NetFirewallRule`) for all network profiles (field Wi-Fi may be classified as public; ADR 0004).
   - Copies `drones.example.json` to `drones.json` if missing.
 - Logs go to a file under the install directory with rotation, plus the console.
 - No admin rights needed at runtime.
