@@ -12,22 +12,14 @@ export interface Release {
 
 export const changelog: readonly Release[] = [
   {
-    version: "0.10.0-beta.2",
-    date: "2026-10-27",
+    version: "0.10.0",
+    date: "2026-11-03",
     changes: [
-      "Testversion für den nächsten Feldtest.",
-      "Setzt die Drohne kurz aus, bleibt das letzte Bild stehen – mit dem Hinweis „Drohne sendet gerade keine Bilder“ statt „Kein Signal“.",
-      "Ist nur die Verbindung des eigenen Geräts zu langsam, steht dort „Schwache Verbindung“ – die Drohne sendet dann normal weiter.",
-      "„Kein Signal“ erscheint erst, wenn die Drohne wirklich getrennt ist (nach 10 s ohne Daten).",
-    ],
-  },
-  {
-    version: "0.10.0-beta.1",
-    date: "2026-10-26",
-    changes: [
-      "Testversion für den nächsten Feldtest.",
-      "Diagnose: zählt Bilder mit fehlerhafter NAL-Struktur pro Drohne und warnt davor. Browser verwerfen den Rest solcher Bilder; strengere Empfänger brechen ab.",
-      "Verwaltung: Mitschnitte – speichert 30 s des Streams einer Drohne unverändert als FLV-Datei zum Herunterladen, für die Analyse der echten Fernsteuerungs-Daten.",
+      "Flüssigeres Bild: Die Fernsteuerung versieht die Bilder mit ungleichmäßigen Zeitstempeln, dadurch hat der Browser etwa jedes dritte Bild übersprungen. Der Dienst gleicht das jetzt aus – im Test bis zu 26 statt 17 Bilder pro Sekunde, ohne zusätzliche Verzögerung.",
+      "Leere Bilder, die die Fernsteuerung alle paar Sekunden mitschickt, werden nicht mehr weitergegeben (behebt „Ungültige NAL-Länge“ in der virtuellen Kamera).",
+      "Setzt die Drohne kurz aus, bleibt das letzte Bild stehen – mit dem Hinweis „Drohne sendet gerade keine Bilder“. Ist nur die Verbindung des eigenen Geräts zu langsam, steht dort „Schwache Verbindung“. „Kein Signal“ erscheint erst, wenn die Drohne wirklich getrennt ist (nach 10 s ohne Daten).",
+      "Installation: Die Firewall lässt die Fernsteuerung jetzt in jedem Netzwerkprofil durch. Stuft Windows das Einsatz-WLAN als „Öffentlich“ ein, scheitert der Start des Live-Streams in Pilot 2 nicht mehr. Dafür die Installation einmal erneut ausführen.",
+      "Diagnose: zählt Bilder mit fehlerhafter Struktur pro Drohne. Verwaltung: Mitschnitte speichern 30 s des Streams einer Drohne unverändert als FLV-Datei zur Analyse.",
     ],
   },
   {
